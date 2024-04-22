@@ -5,15 +5,10 @@
 package com.mycompany.healthcare.dao;
 
 import com.mycompany.healthcare.helper.Helper;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-
 import com.mycompany.healthcare.model.MedicalRecord;
 import com.mycompany.healthcare.model.Patient;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,9 +22,15 @@ public class MedicalRecordDAO {
     private static final List<MedicalRecord> medicalRecords = new ArrayList<>();
 
     static {
-        Patient patient = new Patient(1, 3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
+        Patient patient1 = new Patient(1, 3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
+        Patient patient2 = new Patient(2, 4, "Alice", "Smith", 1234567890, "123 Main St, Anytown, USA", "F", 25, "Healthy", "No significant medical history");
+        Patient patient3 = new Patient(3, 5, "Bob", "Johnson", 1876543210, "456 Elm St, Othertown, USA", "M", 35, "Diagnosed with diabetes", "Regularly monitored for blood sugar levels");
+        Patient patient4 = new Patient(4, 6, "Charlie", "Brown", 1551234567, "789 Oak St, Anotherplace, USA", "M", 45, "Recovering from surgery", "Underwent appendectomy last month");
 
-        medicalRecords.add(new MedicalRecord(1, patient, "Penicillin and related antibiotics", "ADHD", "Every two week checkup and psychological counseling", "O+"));
+        medicalRecords.add(new MedicalRecord(1, patient1, "Penicillin and related antibiotics", "ADHD", "Every two week checkup and psychological counseling", "O+"));
+        medicalRecords.add(new MedicalRecord(2, patient2, "Ibuprofen", "None", "Annual checkup", "AB-"));
+        medicalRecords.add(new MedicalRecord(3, patient3, "Insulin", "Diabetes", "Monthly checkups", "B+"));
+        medicalRecords.add(new MedicalRecord(4, patient4, "Painkillers", "Appendectomy", "Follow-up appointment", "A-"));
     }
 
     public List<MedicalRecord> getAllMedicalRecords() {
@@ -64,10 +65,10 @@ public class MedicalRecordDAO {
         LOGGER.info("Adding a new medicalRecord");
         Helper<MedicalRecord> helper = new Helper<>();
 
-        int newMedicalRecordId = helper.getNextId(medicalRecords, MedicalRecord::getMedicalRecordId);
-        medicalRecord.setMedicalRecordId(newMedicalRecordId);
+        int newMedicalRecordId = helper.getNextId(medicalRecords, MedicalRecord::getMedicalRecordId); //get the next medical record id
+        medicalRecord.setMedicalRecordId(newMedicalRecordId); // set the new medical record id
         medicalRecords.add(medicalRecord);
-        LOGGER.info("New medical record with ID " + newMedicalRecordId + " is added to medicalRecords list");
+        LOGGER.info("New medical record with ID " + newMedicalRecordId + " was added to medical records list");
 
         return newMedicalRecordId;
     }

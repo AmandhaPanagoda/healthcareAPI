@@ -13,7 +13,7 @@ import javax.validation.constraints.Pattern;
  * @author Amandha
  */
 public class Appointment {
-    
+    @NotEmpty(message = "Appointment ID is required")
     private int appointmentId;
     
     @NotEmpty(message = "Date is required")
@@ -24,7 +24,10 @@ public class Appointment {
     @Pattern(regexp = "\\d{2}:\\d{2}:\\d{2}", message = "Time must be in the format hh:mm:ss")
     private String time;
     
+    @NotEmpty(message = "Patient is required")
     private Patient patient;
+    
+    @NotEmpty(message = "Doctor is required")
     private Doctor doctor;
 
     public Appointment() {

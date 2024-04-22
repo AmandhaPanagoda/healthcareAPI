@@ -4,16 +4,27 @@
  */
 package com.mycompany.healthcare.model;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Pattern;
+
 /**
  *
  * @author Amandha
  */
 public class MedicalRecord {
+    
+    @NotEmpty(message = "Medical Record ID is required")
     private int medicalRecordId;
+    
+    @NotEmpty(message = "Patient is required")
     private Patient patient;
+    
     private String allergies;
     private String diagnosis;
     private String treatment;
+    
+    @NotEmpty(message = "Blood Group is required")
+    @Pattern(regexp = "^(A|B|AB|O)[+-]$", message = "Please enter a valid Blood Group")
     private String bloodGroup;
 
     public MedicalRecord() {

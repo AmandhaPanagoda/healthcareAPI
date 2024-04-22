@@ -6,6 +6,7 @@ package com.mycompany.healthcare.resource;
 
 import com.mycompany.healthcare.dao.MedicalRecordDAO;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
+import com.mycompany.healthcare.helper.ValidationHelper;
 import java.util.List;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.DELETE;
@@ -17,6 +18,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import com.mycompany.healthcare.model.MedicalRecord;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,16 +34,31 @@ public class MedicalRecordResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(MedicalRecordResource.class);
     private final MedicalRecordDAO medicalRecordDAO = new MedicalRecordDAO();
 
+    /**
+     * Retrieves all medical records.
+     *
+     * @return List of all medical records
+     * @throws ResourceNotFoundException if no records are found
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public List<MedicalRecord> getAllMedicalRecords() {
+        LOGGER.info("Fetching all medical records");
         if (medicalRecordDAO.getAllMedicalRecords() != null) {
             return medicalRecordDAO.getAllMedicalRecords();
         } else {
+            LOGGER.info("No medical records were found");
             throw new ResourceNotFoundException("No records were found");
         }
     }
 
+    /**
+     * Retrieves a specific medical record by ID.
+     *
+     * @param medicalRecordId The ID of the medical record to retrieve
+     * @return The medical record with the specified ID
+     * @throws ResourceNotFoundException if the record is not found
+     */
     @GET
     @Path("/{medicalRecordId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -53,6 +72,16 @@ public class MedicalRecordResource {
         }
     }
 
+    /**
+     * Searches for medical records based on the provided criteria. If no
+     * criteria are provided, returns all medical records.
+     *
+     * @param patientFirstName The first name of the patient to search for.
+     * @param patientLastName The last name of the patient to search for.
+     * @param bloodGroup The blood group of the patient to search for.
+     * @return A response containing the matching medical records or a message
+     * indicating no records were found.
+     */
     @GET
     @Path("/search")
     @Produces(MediaType.APPLICATION_JSON)
@@ -87,9 +116,76 @@ public class MedicalRecordResource {
         }
     }
 
+    /**
+     * Adds a new medical record.
+     *
+     * @param medicalRecord The medical record object to add.
+     * @return A response indicating the success or failure of the add
+     * operation.
+     */
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response addMedicalRecord(MedicalRecord medicalRecord) {
+        LOGGER.info("Adding a new medical record");
+
+        // Validate the medical record object
+        String validationError = ValidationHelper.validate(medicalRecord);
+        if (validationError != null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
+        }
+
+        int newMedicalRecordId = medicalRecordDAO.addMedicalRecord(medicalRecord);
+        return Response.status(Response.Status.CREATED).entity("New medical record with ID: " + newMedicalRecordId + " was added successfully").build();
+    }
+
+    /**
+     * Updates an existing medical record with the provided ID.
+     *
+     * @param medicalRecordId The ID of the medical record to update.
+     * @param updatedMedicalRecord The updated medical record object.
+     * @return A response indicating the success or failure of the update
+     * operation.
+     */
+    @PUT
+    @Path("/{medicalRecordId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updateMedicalRecord(@PathParam("medicalRecordId") int medicalRecordId, MedicalRecord updatedMedicalRecord) {
+
+        // Validate the medical record object
+        String validationError = ValidationHelper.validate(updatedMedicalRecord);
+        if (validationError != null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
+        }
+
+        if (medicalRecordId != updatedMedicalRecord.getMedicalRecordId()) { // IDs are immutable when updating
+            LOGGER.info("URL parameter medical record ID and the passed medical record ID do not match");
+            return Response.status(Response.Status.OK).entity("IDs are immutable. The passed appointment IDs do not match").build();
+        }
+
+        LOGGER.info("Updating medical record with ID: " + medicalRecordId);
+        MedicalRecord existingMedicalRecord = medicalRecordDAO.getMedicalRecordById(medicalRecordId);
+
+        if (existingMedicalRecord != null) { //check if the medical record exists
+            medicalRecordDAO.updateMedicalRecord(updatedMedicalRecord); // update the existing medical record
+            LOGGER.info("Medical record was updated. Updated Medical Record ID: " + medicalRecordId);
+            return Response.status(Response.Status.OK).entity("Medical Record with ID " + medicalRecordId + " was updated successfully").build();
+        } else {
+            LOGGER.error("Medical Record ID: " + medicalRecordId + " was not found");
+            throw new ResourceNotFoundException("Medical Record with ID " + medicalRecordId + " was not found");
+        }
+    }
+
+    /**
+     * Deletes a medical record with the specified ID.
+     *
+     * @param medicalRecordId The ID of the medical record to delete
+     * @return Response indicating the success or failure of the operation
+     * @throws ResourceNotFoundException if the record is not found
+     */
     @DELETE
     @Path("/{medicalRecordId}")
     public Response deleteMedicalRecord(@PathParam("medicalRecordId") int medicalRecordId) {
+        LOGGER.info("Deleting medical record ...");
         boolean removed = medicalRecordDAO.deleteMedicalRecord(medicalRecordId);
         if (removed) {
             return Response.status(Response.Status.OK).entity("Medical Record with ID " + medicalRecordId + " was deleted successfully").build();
@@ -97,5 +193,4 @@ public class MedicalRecordResource {
             throw new ResourceNotFoundException("Medical Record with ID " + medicalRecordId + " was not found");
         }
     }
-
 }
