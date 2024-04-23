@@ -9,6 +9,7 @@ import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
 import java.util.List;
 import com.mycompany.healthcare.model.Appointment;
+import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.ws.rs.BadRequestException;
@@ -36,10 +37,10 @@ public class AppointmentResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Appointment> getAllAppointments() {
+    public Collection<Appointment> getAllAppointments() {
         LOGGER.info("Getting all appointments");
         if (appointmentDAO.getAllAppointments() != null) {
-            return appointmentDAO.getAllAppointments();
+            return appointmentDAO.getAllAppointments().values();
         } else {
             LOGGER.info("No appointments were found");
             throw new ResourceNotFoundException("No records were found");

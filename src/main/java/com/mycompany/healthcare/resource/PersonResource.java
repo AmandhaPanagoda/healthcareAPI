@@ -4,15 +4,11 @@
  */
 package com.mycompany.healthcare.resource;
 
-import com.mycompany.healthcare.dao.PersonDAO;
-import com.mycompany.healthcare.exception.ResourceNotFoundException;
-import com.mycompany.healthcare.helper.ValidationHelper;
 import java.util.List;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -22,8 +18,12 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import com.mycompany.healthcare.model.Person;
+import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.mycompany.healthcare.dao.PersonDAO;
+import com.mycompany.healthcare.exception.ResourceNotFoundException;
+import com.mycompany.healthcare.helper.ValidationHelper;
 
 /**
  *
@@ -37,9 +37,9 @@ public class PersonResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Person> getAllPeople() {
+    public Collection<Person> getAllPeople() {
         if (personDAO.getAllPeople() != null) {
-            return personDAO.getAllPeople();
+            return personDAO.getAllPeople().values();
         } else {
             throw new ResourceNotFoundException("No records were found");
         }
@@ -95,24 +95,6 @@ public class PersonResource {
         }
     }
 
-    @PATCH
-    @Path("/{personId}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response patchPerson(@PathParam("personId") int personId, Person updatedPerson) {
-        if (personId != updatedPerson.getPersonId()) {
-            return Response.status(Response.Status.NOT_MODIFIED).entity("Person IDs do not match").build();
-        }
-        Person existingPerson = personDAO.getPersonById(personId);
-
-        if (existingPerson != null) {
-            updatedPerson.setPersonId(personId);
-            personDAO.patchPerson(updatedPerson);
-            return Response.status(Response.Status.OK).entity(updatedPerson).build();
-        } else {
-            throw new ResourceNotFoundException("Person with ID " + personId + " not found");
-        }
-    }
-
     @DELETE
     @Path("/{personId}")
     public Response deletePerson(@PathParam("personId") int personId) {
@@ -162,5 +144,4 @@ public class PersonResource {
                     .build();
         }
     }
-
 }

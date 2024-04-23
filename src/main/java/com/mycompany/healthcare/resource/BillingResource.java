@@ -21,8 +21,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import com.mycompany.healthcare.model.Appointment;
 import com.mycompany.healthcare.model.Billing;
+import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Amandha
  */
+@Path("bills")
 public class BillingResource {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(BillingResource.class);
@@ -37,9 +38,9 @@ public class BillingResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Billing> getAllBills() {
+    public Collection<Billing> getAllBills() {
         if (billingDAO.getAllBills() != null) {
-            return billingDAO.getAllBills();
+            return billingDAO.getAllBills().values();
         } else {
             throw new ResourceNotFoundException("No records were found");
         }

@@ -7,7 +7,6 @@ package com.mycompany.healthcare.resource;
 import com.mycompany.healthcare.dao.PrescriptionDAO;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
-import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -19,6 +18,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import com.mycompany.healthcare.model.Prescription;
+import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +34,9 @@ public class PrescriptionResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Prescription> getAllPrescriptions() {
+    public Collection<Prescription> getAllPrescriptions() {
         if (prescriptionDAO.getAllPrescriptions() != null) {
-            return prescriptionDAO.getAllPrescriptions();
+            return prescriptionDAO.getAllPrescriptions().values();
         } else {
             throw new ResourceNotFoundException("No records were found");
         }

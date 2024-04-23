@@ -5,9 +5,11 @@
 package com.mycompany.healthcare.dao;
 
 import com.mycompany.healthcare.helper.Helper;
-import java.util.ArrayList;
-import java.util.List;
 import com.mycompany.healthcare.model.Doctor;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,85 +18,120 @@ import org.slf4j.LoggerFactory;
  * @author Amandha
  */
 public class DoctorDAO {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DoctorDAO.class);
-    private static final List<Doctor> doctors = new ArrayList<>();
-    
+    private static final Map<Integer, Doctor> doctors = new HashMap<>();
+
+    // Static block to initialize some sample doctor records
     static {
-        doctors.add(new Doctor(1,"Cardiologist", 1, "Eric", "Anderson", 1234548548, "684 Delaware Avenue, SF", "M", 45));
-        doctors.add(new Doctor(2, "Neurologist", 2, "Abigail", "Henderson", 1124579548, "2075 Elliott Street, NH", "F", 33));
+        doctors.put(1, new Doctor(1, "Cardiologist", 1, "Eric", "Anderson", 1234548548, "684 Delaware Avenue, SF", "M", 45));
+        doctors.put(2, new Doctor(2, "Neurologist", 2, "Abigail", "Henderson", 1124579548, "2075 Elliott Street, NH", "F", 33));
     }
-    
-    public List<Doctor> getAllDoctors() {
+
+    /**
+     * Retrieves all doctors from the database.
+     *
+     * @return A map of all doctors indexed by their IDs.
+     */
+    public Map<Integer, Doctor> getAllDoctors() {
         LOGGER.info("Retrieving all doctors");
         return doctors;
     }
-    
+
+    /**
+     * Retrieves a doctor by their unique ID.
+     *
+     * @param doctorId The ID of the doctor to retrieve.
+     * @return The doctor object if found, otherwise null.
+     */
     public Doctor getDoctorById(int doctorId) {
-        LOGGER.info("Retrieving doctor by ID {0}", doctorId);
-        for(Doctor doctor : doctors) {
-            if(doctor.getDoctorId() == doctorId) {
-                return doctor;
-            }
+        LOGGER.info("Retrieving doctor by ID: {}", doctorId);
+        Doctor doctor = doctors.get(doctorId);
+        if (doctor == null) {
+            LOGGER.info("Doctor with ID {} was not found", doctorId);
         }
-        LOGGER.info("Doctor with ID " +doctorId+ " was not found");
-        return null;
+        return doctor;
     }
-    
+
+    /**
+     * Adds a new doctor to the database.
+     *
+     * @param doctor The doctor object to add.
+     * @return The ID assigned to the new doctor.
+     */
     public int addDoctor(Doctor doctor) {
         LOGGER.info("Adding a new doctor");
-        
+
         Helper<Doctor> helper = new Helper<>();
-        int newDoctorId = helper.getNextId(doctors, Doctor::getDoctorId); //get the next available doctor ID
-        
+        int newDoctorId = helper.getNextId(doctors); //get the next available doctor ID
+
         doctor.setDoctorId(newDoctorId); //set the new doctor ID
-        doctors.add(doctor);
-        
+        doctors.put(newDoctorId, doctor);
+
         return newDoctorId;
     }
-    
-    public void updateDoctor(Doctor updateDoctor) {
-        LOGGER.info("Update doctor record");
-        for (int i = 0; i < doctors.size(); i++) {
-            Doctor doctor = doctors.get(i);
-            if (doctor.getDoctorId() == updateDoctor.getDoctorId()) {
-                doctors.set(i, updateDoctor);
-                LOGGER.info("Doctor record was updated. Doctor ID : " + updateDoctor.getDoctorId());
-                return;
-            }
+
+    /**
+     * Updates an existing doctor record in the database.
+     *
+     * @param updatedDoctor The updated doctor object.
+     */
+    public void updateDoctor(Doctor updatedDoctor) {
+        LOGGER.info("Updating doctor record");
+        Doctor existingDoctor = doctors.get(updatedDoctor.getDoctorId());
+        if (existingDoctor != null) {
+            doctors.put(updatedDoctor.getDoctorId(), updatedDoctor);
+            LOGGER.info("Doctor record was updated. Doctor ID : {}", updatedDoctor.getDoctorId());
+        } else {
+            LOGGER.info("Doctor record with ID {} was not found", updatedDoctor.getDoctorId());
         }
     }
-    
+
+    /**
+     * Deletes a doctor record from the database.
+     *
+     * @param doctorId The ID of the doctor to delete.
+     * @return True if the doctor was successfully deleted, otherwise false.
+     */
     public boolean deleteDoctor(int doctorId) {
-        LOGGER.info("Deleting the doctor with ID: " + doctorId);
-        boolean removed = doctors.removeIf(doctor -> {
-            if (doctor.getDoctorId() == doctorId) {
-                LOGGER.info("Doctor record with Doctor ID: " + doctorId + " was deleted");
-                return true;
-            }
-            LOGGER.info("Doctor record with Doctor ID: " + doctorId + " was not found found");
+        LOGGER.info("Deleting the doctor with ID: {}", doctorId);
+        Doctor removedDoctor = doctors.remove(doctorId);
+        if (removedDoctor != null) {
+            LOGGER.info("Doctor record with ID {} was deleted", doctorId);
+            return true;
+        } else {
+            LOGGER.info("Doctor record with ID {} was not found", doctorId);
             return false;
-        });
-        return removed;
+        }
     }
-    
+
+    /**
+     * Searches for doctors in the database based on specified criteria.
+     *
+     * @param firstName The first name of the doctor.
+     * @param lastName The last name of the doctor.
+     * @param minAge The minimum age of the doctor.
+     * @param maxAge The maximum age of the doctor.
+     * @param gender The gender of the doctor.
+     * @param specialization The specialization of the doctor.
+     * @return A list of matching doctors indexed by their IDs.
+     */
     public List<Doctor> searchDoctors(String firstName, String lastName, Integer minAge, Integer maxAge, String gender, String specialization) {
-        LOGGER.info("Searching for people with first name: " + firstName + ", last name: " + lastName
-                + ", age range: " + minAge + " - " + maxAge + ", gender: " + gender +  " and specialization: "+specialization);
+        LOGGER.info("Searching for doctors with first name: {}, last name: {}, age range: {} - {}, gender: {}, and specialization: {}",
+                firstName, lastName, minAge, maxAge, gender, specialization);
 
         List<Doctor> matchingDoctors = new ArrayList<>();
-        for (Doctor doctor : doctors) {
+        for (Doctor doctor : doctors.values()) {
             boolean matchFirstName = firstName == null || firstName.equalsIgnoreCase(doctor.getFirstName());
             boolean matchLastName = lastName == null || lastName.equalsIgnoreCase(doctor.getLastName());
             boolean matchAge = (minAge == null || doctor.getAge() >= minAge) && (maxAge == null || doctor.getAge() <= maxAge);
             boolean matchGender = gender == null || gender.equalsIgnoreCase(doctor.getGender());
             boolean matchSpecialization = specialization == null || specialization.equalsIgnoreCase(doctor.getSpecialization());
-            
+
             if (matchFirstName && matchLastName && matchAge && matchGender && matchSpecialization) {
                 matchingDoctors.add(doctor);
             }
         }
         return matchingDoctors;
     }
-
 }

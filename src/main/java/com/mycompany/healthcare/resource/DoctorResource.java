@@ -4,10 +4,13 @@
  */
 package com.mycompany.healthcare.resource;
 
+import com.mycompany.healthcare.dao.AppointmentDAO;
 import com.mycompany.healthcare.dao.DoctorDAO;
 import com.mycompany.healthcare.dao.PersonDAO;
+import com.mycompany.healthcare.dao.PrescriptionDAO;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
+import com.mycompany.healthcare.model.Appointment;
 import java.util.List;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
@@ -23,6 +26,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import com.mycompany.healthcare.model.Doctor;
 import com.mycompany.healthcare.model.Person;
+import com.mycompany.healthcare.model.Prescription;
+import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,19 +40,32 @@ public class DoctorResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DoctorResource.class);
 
-    private DoctorDAO doctorDAO = new DoctorDAO();
-    private PersonDAO personDAO = new PersonDAO();
+    private final DoctorDAO doctorDAO = new DoctorDAO();
+    private final PersonDAO personDAO = new PersonDAO();
+    private final AppointmentDAO appointmentDAO = new AppointmentDAO();
+    private final PrescriptionDAO prescriptionDAO = new PrescriptionDAO();
 
+    /**
+     * Retrieves all doctors.
+     *
+     * @return A collection of all doctors.
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Doctor> getAllDoctors() {
-        if (doctorDAO.getAllDoctors() != null) {
-            return doctorDAO.getAllDoctors();
+    public Collection<Doctor> getAllDoctors() {
+        if (!doctorDAO.getAllDoctors().isEmpty()) {
+            return doctorDAO.getAllDoctors().values();
         } else {
             throw new ResourceNotFoundException("No records were found");
         }
     }
 
+    /**
+     * Retrieves a doctor by ID.
+     *
+     * @param doctorId The ID of the doctor to retrieve.
+     * @return The doctor with the specified ID.
+     */
     @GET
     @Path("/{doctorId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -61,6 +79,12 @@ public class DoctorResource {
         }
     }
 
+    /**
+     * Adds a new doctor.
+     *
+     * @param doctor The doctor to add.
+     * @return A response indicating the success of the operation.
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addDoctor(Doctor doctor) {
@@ -77,14 +101,20 @@ public class DoctorResource {
         return Response.status(Response.Status.CREATED).entity("New doctor with ID: " + newDoctorId + " was added successfully").build();
     }
 
+    /**
+     * Updates an existing doctor.
+     *
+     * @param doctorId The ID of the doctor to update.
+     * @param updatedDoctor The updated doctor information.
+     * @return A response indicating the success of the operation.
+     */
     @PUT
     @Path("/{doctorId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateDoctor(@PathParam("doctorId") int doctorId, Doctor updatedDoctor) {
         if (doctorId != updatedDoctor.getDoctorId()) {
             LOGGER.info("URL parameter doctor ID and the passed doctor ID do not match");
-
-            return Response.status(Response.Status.OK).entity("The passed doctor IDs do not match").build();
+            return Response.status(Response.Status.CONFLICT).entity("The passed doctor IDs do not match").build();
         }
         LOGGER.info("Updating doctor with ID: " + doctorId);
         Doctor existingDoctor = doctorDAO.getDoctorById(doctorId);
@@ -92,7 +122,7 @@ public class DoctorResource {
         if (existingDoctor == null) {
             LOGGER.error("Doctor ID" + doctorId + " was not found");
 
-            throw new ResourceNotFoundException("Doctor with ID " + doctorId + " was not found");
+            throw new ResourceNotFoundException("Error in updating! Doctor with ID " + doctorId + " was not found");
         } else if (existingDoctor.getPersonId() != updatedDoctor.getPersonId()) {
             String message = "Person ID of the doctor cannot be updated. Existing Person ID: " + existingDoctor.getPersonId() + ". Passed Person ID: " + updatedDoctor.getPersonId();
             LOGGER.info(message);
@@ -106,13 +136,18 @@ public class DoctorResource {
 
             updatedDoctor.setDoctorId(doctorId);
             doctorDAO.updateDoctor(updatedDoctor);
-            personDAO.updatePerson(updatedDoctor); //update the person record
             LOGGER.info("Doctor record was updated. Updated Doctor ID: " + doctorId);
 
             return Response.status(Response.Status.OK).entity("Doctor with ID " + doctorId + " was updated successfully").build();
         }
     }
 
+    /**
+     * Deletes a doctor by ID.
+     *
+     * @param doctorId The ID of the doctor to delete.
+     * @return A response indicating the success of the operation.
+     */
     @DELETE
     @Path("/{doctorId}")
     public Response deleteDoctor(@PathParam("doctorId") int doctorId) {
@@ -124,6 +159,17 @@ public class DoctorResource {
         }
     }
 
+    /**
+     * Searches for doctors based on specified criteria.
+     *
+     * @param firstName The first name of the doctor.
+     * @param lastName The last name of the doctor.
+     * @param minAge The minimum age of the doctor.
+     * @param maxAge The maximum age of the doctor.
+     * @param gender The gender of the doctor.
+     * @param specialization The specialization of the doctor.
+     * @return A response containing the matching doctors.
+     */
     @GET
     @Path("/search")
     @Produces(MediaType.APPLICATION_JSON)
@@ -135,7 +181,7 @@ public class DoctorResource {
             @QueryParam("gender") String gender,
             @QueryParam("specialization") String specialization) {
 
-        LOGGER.info("Searching for people with first name: " + firstName + ", last name: " + lastName
+        LOGGER.info("Searching for doctors with first name: " + firstName + ", last name: " + lastName
                 + ", age range: " + minAge + " - " + maxAge + ", gender: " + gender + " and specialization: " + specialization);
 
         if ((firstName == null || firstName.isEmpty())
@@ -162,4 +208,49 @@ public class DoctorResource {
                     .build();
         }
     }
+
+    /**
+     * Retrieves all appointments of a doctor based on the doctor's ID.
+     *
+     * @param doctorId The ID of the doctor.
+     * @return A Response containing the list of appointments in JSON format.
+     * @throws ResourceNotFoundException if the doctor does not have any
+     * appointments.
+     */
+    @GET
+    @Path("/{doctorId}/appointments")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDoctorAppointments(@PathParam("doctorId") int doctorId) {
+        LOGGER.info("Searching for appointments of doctor with ID: " + doctorId);
+        List<Appointment> existingAppointments = appointmentDAO.getAppointmentByDoctorId(doctorId); // get patients appointments
+
+        if (!existingAppointments.isEmpty()) {
+            return Response.ok().entity(existingAppointments).build();
+        } else {
+            throw new ResourceNotFoundException("Doctor with ID " + doctorId + " does not have any appointments");
+        }
+    }
+
+    /**
+     * Retrieves all prescriptions of a doctor based on the doctor's ID.
+     *
+     * @param doctorId The ID of the doctor.
+     * @return A Response containing the list of prescriptions in JSON format.
+     * @throws ResourceNotFoundException if the doctor does not have any
+     * prescriptions.
+     */
+    @GET
+    @Path("/{doctorId}/prescriptions")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDoctorPrescriptions(@PathParam("doctorId") int doctorId) {
+        LOGGER.info("Searching for prescriptions of doctor with ID: " + doctorId);
+        List<Prescription> existingPrescriptions = prescriptionDAO.getPrescriptionByDoctorId(doctorId); // get patients appointments
+
+        if (!existingPrescriptions.isEmpty()) {
+            return Response.ok().entity(existingPrescriptions).build();
+        } else {
+            throw new ResourceNotFoundException("Doctor with ID " + doctorId + " has not created any prescriptions");
+        }
+    }
+
 }

@@ -18,6 +18,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import com.mycompany.healthcare.model.MedicalRecord;
+import java.util.Collection;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -42,11 +43,11 @@ public class MedicalRecordResource {
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public List<MedicalRecord> getAllMedicalRecords() {
+    public Collection<MedicalRecord> getAllMedicalRecords() {
         LOGGER.info("Fetching all medical records");
 
         if (medicalRecordDAO.getAllMedicalRecords() != null) {
-            return medicalRecordDAO.getAllMedicalRecords(); //return all the medical records 
+            return medicalRecordDAO.getAllMedicalRecords().values(); //return all the medical records 
         } else {
             LOGGER.info("No medical records were found");
             throw new ResourceNotFoundException("No records were found");

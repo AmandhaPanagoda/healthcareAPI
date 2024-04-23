@@ -4,6 +4,10 @@
  */
 package com.mycompany.healthcare.model;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+
 /**
  *
  * @author Amandha
@@ -11,9 +15,17 @@ package com.mycompany.healthcare.model;
 public class Prescription {
 
     private int prescriptionId;
+    
+    @NotNull(message = "Patient is required")
     private Patient prescribedFor;
+    
+    @NotNull(message = "Doctor is required")
     private Doctor prescribedBy;
+    
+    @NotEmpty(message = "Date is required")
+    @Pattern(regexp = "\\d{2}-\\d{2}-\\d{4}", message = "Date must be in the format dd-mm-yyyy")
     private String prescribedDate;
+    
     private String medication;
     private String instruction;
     private String dosage;

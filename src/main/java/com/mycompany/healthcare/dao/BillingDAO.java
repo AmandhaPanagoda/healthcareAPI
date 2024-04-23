@@ -15,6 +15,8 @@ import java.util.Date;
 import java.util.List;
 import com.mycompany.healthcare.model.Billing;
 import com.mycompany.healthcare.model.Patient;
+import java.util.HashMap;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +27,7 @@ import org.slf4j.LoggerFactory;
 public class BillingDAO {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BillingDAO.class);
-    private static final List<Billing> bills = new ArrayList<>();
+    private static final Map<Integer, Billing> bills = new HashMap<>();
 
     static {
         Patient patient = new Patient(1, 3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
@@ -33,32 +35,43 @@ public class BillingDAO {
         String currentTime = formatSimpleTime(new Date());
 
         List<String> services = Arrays.asList("Consultation", "X-ray", "Medication");
-        bills.add(new Billing(1, currentDate, currentTime, patient, services, 200.0, 150.0, 50.0));
+        bills.put(1, new Billing(1, currentDate, currentTime, patient, services, 200.0, 150.0, 50.0));
     }
 
-    public List<Billing> getAllBills() {
+    /**
+     * Retrieves all bills from the database.
+     *
+     * @return A map of all bills indexed by their IDs.
+     */
+    public Map<Integer, Billing> getAllBills() {
         LOGGER.info("Retrieving all bills");
         return bills;
     }
 
+    /**
+     * Retrieves a bill by its unique ID.
+     *
+     * @param billId The ID of the bill to retrieve.
+     * @return The bill object if found, otherwise null.
+     */
     public Billing getBillById(int billId) {
-        LOGGER.info("Retrieving bill by ID " + billId);
-        for (Billing bill : bills) {
-            if (bill.getBillId() == billId) {
-                return bill;
-            }
-        }
-        LOGGER.info("Bill by ID " + billId + " was not found");
-        return null;
+        LOGGER.info("Retrieving bill by ID {}", billId);
+        return bills.get(billId);
     }
 
+    /**
+     * Retrieves bills associated with a patient ID.
+     *
+     * @param patientId The ID of the patient.
+     * @return A list of bills associated with the patient.
+     */
     public List<Billing> getBillByPatientId(int patientId) {
-        LOGGER.info("Retrieving bill by Patient ID " + patientId);
+        LOGGER.info("Retrieving bills by Patient ID {}", patientId);
 
         List<Billing> matchingBills = new ArrayList<>();
 
-        for (Billing bill : bills) {
-            int billPatientId = (bill.getPatient()).getPatientId();
+        for (Billing bill : bills.values()) {
+            int billPatientId = bill.getPatient().getPatientId();
             if (patientId == billPatientId) {
                 matchingBills.add(bill);
             }
@@ -66,45 +79,65 @@ public class BillingDAO {
         return matchingBills;
     }
 
+    /**
+     * Adds a new bill to the database.
+     *
+     * @param bill The bill object to add.
+     * @return The ID assigned to the new bill.
+     */
     public int addBill(Billing bill) {
         LOGGER.info("Adding a new bill");
 
         Helper<Billing> helper = new Helper<>();
-        int newBillId = helper.getNextId(bills, Billing::getBillId);
+        int newBillId = helper.getNextId(bills);
 
         bill.setBillId(newBillId);
-        bills.add(bill);
-        LOGGER.info("New bill with ID " + newBillId + " is added to bills list");
+        bills.put(newBillId, bill);
+        LOGGER.info("New bill with ID {} is added to bills list", newBillId);
 
         return newBillId;
     }
 
+    /**
+     * Updates an existing bill record in the database.
+     *
+     * @param updatedBill The updated bill object.
+     */
     public void updateBill(Billing updatedBill) {
         LOGGER.info("Update bill");
-        for (int i = 0; i < bills.size(); i++) {
-            Billing bill = bills.get(i);
-            if (bill.getBillId() == updatedBill.getBillId()) {
-                updatedBill.setBillId(bill.getBillId());
-                bills.set(i, updatedBill);
-                LOGGER.info("Bill was updated. Bill ID : " + updatedBill.getBillId());
-                return;
-            }
+        Billing existingBill = bills.get(updatedBill.getBillId());
+        if (existingBill != null) {
+            bills.put(updatedBill.getBillId(), updatedBill);
+            LOGGER.info("Bill was updated. Bill ID : {}", updatedBill.getBillId());
+        } else {
+            LOGGER.info("Bill with ID {} was not found", updatedBill.getBillId());
         }
     }
 
+    /**
+     * Deletes a bill record from the database.
+     *
+     * @param billId The ID of the bill to delete.
+     * @return True if the bill was successfully deleted, otherwise false.
+     */
     public boolean deleteBill(int billId) {
-        boolean removed = bills.removeIf(bill -> {
-            if (bill.getBillId() == billId) {
-                LOGGER.info("Deleting the Bill with ID: " + billId);
-                return true;
-            }
-            return false;
-        });
+        boolean removed = bills.remove(billId) != null;
+        LOGGER.info("Deleting the Bill with ID: {}", billId);
         return removed;
     }
 
+    /**
+     * Searches for bills in the database based on specified criteria.
+     *
+     * @param patientFirstName The first name of the patient.
+     * @param patientLastName The last name of the patient.
+     * @param startBillDate The start date for the bill search range.
+     * @param endBillDate The end date for the bill search range.
+     * @return A list of matching bills.
+     */
     public List<Billing> searchBills(String patientFirstName, String patientLastName, String startBillDate, String endBillDate) {
-        LOGGER.info("Searching for bills in the given criteria");
+        LOGGER.info("Searching for bills with criteria - Patient First Name: {}, Patient Last Name: {}, Start Bill Date: {}, End Bill Date: {}",
+                patientFirstName, patientLastName, startBillDate, endBillDate);
 
         List<Billing> matchingBills = new ArrayList<>();
 
@@ -120,11 +153,11 @@ public class BillingDAO {
                 toDate = parseSimpleDate(endBillDate);
             }
         } catch (ParseException e) {
-            LOGGER.error("Error parsing dates: " + e.getMessage());
+            LOGGER.error("Error parsing dates: {}", e.getMessage());
             return matchingBills;
         }
 
-        for (Billing bill : bills) {
+        for (Billing bill : bills.values()) {
 
             Patient patient = bill.getPatient();
 
@@ -133,7 +166,7 @@ public class BillingDAO {
             try {
                 billDate = parseSimpleDate(bill.getBillDate());
             } catch (ParseException e) {
-                LOGGER.error("Error parsing appointment date: " + e.getMessage());
+                LOGGER.error("Error parsing appointment date: {}", e.getMessage());
             }
 
             boolean matchPatientFirstName = patientFirstName == null || patientFirstName.equalsIgnoreCase(patient.getFirstName());
