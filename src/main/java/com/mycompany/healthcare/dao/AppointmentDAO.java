@@ -63,6 +63,20 @@ public class AppointmentDAO {
         LOGGER.info("Apointment ID " + appointmentId + " does not exist");
         return null;
     }
+    
+     public List<Appointment> getAppointmentbyPatientId(int patientId) {
+        LOGGER.info("Retrieving apointment by Patient ID " + patientId);
+        List<Appointment> matchingAppointments = new ArrayList<>();
+        
+        for (Appointment appointment : appointments) {
+            int appointmentPatientID = (appointment.getPatient()).getPatientId();
+            if (patientId == appointmentPatientID) {
+                matchingAppointments.add(appointment);
+            }
+        }
+
+        return matchingAppointments;
+    }
 
     public int addAppointment(Appointment appointment) {
         LOGGER.info("Adding a new appointment");

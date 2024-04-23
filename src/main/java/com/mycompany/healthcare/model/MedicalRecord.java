@@ -4,7 +4,9 @@
  */
 package com.mycompany.healthcare.model;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 /**
@@ -12,17 +14,16 @@ import javax.validation.constraints.Pattern;
  * @author Amandha
  */
 public class MedicalRecord {
-    
-    @NotEmpty(message = "Medical Record ID is required")
+
     private int medicalRecordId;
-    
-    @NotEmpty(message = "Patient is required")
+
+    @NotNull(message = "Patient is required")
     private Patient patient;
-    
+
     private String allergies;
     private String diagnosis;
     private String treatment;
-    
+
     @NotEmpty(message = "Blood Group is required")
     @Pattern(regexp = "^(A|B|AB|O)[+-]$", message = "Please enter a valid Blood Group")
     private String bloodGroup;
@@ -31,7 +32,7 @@ public class MedicalRecord {
     }
 
     public MedicalRecord(int medicalRecordId, Patient patient, String allergies, String diagnosis, String treatment, String bloodGroup) {
-        this. medicalRecordId = medicalRecordId;
+        this.medicalRecordId = medicalRecordId;
         this.patient = patient;
         this.allergies = allergies;
         this.diagnosis = diagnosis;
@@ -87,4 +88,3 @@ public class MedicalRecord {
         this.bloodGroup = bloodGroup;
     }
 }
-

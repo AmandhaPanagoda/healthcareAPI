@@ -4,6 +4,8 @@
  */
 package com.mycompany.healthcare.model;
 
+import javax.validation.constraints.Min;
+
 /**
  *
  * @author Amandha

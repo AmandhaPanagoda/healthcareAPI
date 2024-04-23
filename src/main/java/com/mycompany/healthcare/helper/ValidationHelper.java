@@ -26,8 +26,7 @@ public class ValidationHelper {
             for (ConstraintViolation<T> violation : violations) {
                 errorMessage.append(violation.getPropertyPath()).append(": ").append(violation.getMessage()).append("\n");
             }
-            errorMessage.delete(errorMessage.length() - 2, errorMessage.length()); 
-            return errorMessage.toString();
+            return errorMessage.toString().trim(); // Trim to remove any leading or trailing whitespace
         }
 
         return null;

@@ -4,18 +4,19 @@
  */
 package com.mycompany.healthcare.model;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
-
 
 /**
  *
  * @author Amandha
  */
 public class Appointment {
-    @NotEmpty(message = "Appointment ID is required")
+
+    @Min(value = 1, message = "Appointment ID must be a positive integer")
     private int appointmentId;
-    
+
     @NotEmpty(message = "Date is required")
     @Pattern(regexp = "\\d{2}-\\d{2}-\\d{4}", message = "Date must be in the format dd-mm-yyyy")
     private String date;
@@ -23,10 +24,10 @@ public class Appointment {
     @NotEmpty(message = "Time is required")
     @Pattern(regexp = "\\d{2}:\\d{2}:\\d{2}", message = "Time must be in the format hh:mm:ss")
     private String time;
-    
+
     @NotEmpty(message = "Patient is required")
     private Patient patient;
-    
+
     @NotEmpty(message = "Doctor is required")
     private Doctor doctor;
 
@@ -80,6 +81,5 @@ public class Appointment {
     public void setDoctor(Doctor doctor) {
         this.doctor = doctor;
     }
- 
-}
 
+}

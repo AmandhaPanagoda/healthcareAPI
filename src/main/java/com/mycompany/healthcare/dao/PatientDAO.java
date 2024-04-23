@@ -49,9 +49,9 @@ public class PatientDAO {
         Helper<Patient> helper = new Helper<>();
         int newPatientId = helper.getNextId(patients, Patient::getPatientId); //get new patient ID
         
-        patient.setPatientId(newPatientId);
+        patient.setPatientId(newPatientId); // set the new patient ID
         patients.add(patient);
-        LOGGER.info("New patient with ID " + newPatientId + " is added to patient list");
+        LOGGER.info("New patient with ID " + newPatientId + " was added to patient list");
         
         return newPatientId;
     }
