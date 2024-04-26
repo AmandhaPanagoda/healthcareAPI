@@ -5,13 +5,14 @@
 package com.mycompany.healthcare.model;
 
 import javax.validation.constraints.Digits;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 /**
- *
+ * Represents a person with attributes such as first name, last name, age, gender, contact number, and address.
+ * Provides getter and setters for these attributes.
+ * 
  * @author Amandha
  */
 public class Person {

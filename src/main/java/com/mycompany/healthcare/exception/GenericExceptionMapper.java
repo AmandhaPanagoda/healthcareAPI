@@ -45,10 +45,8 @@ public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
         } else if (exception instanceof BadRequestException) {
             LOGGER.warn("Bad request: " + exception.getMessage());
             if (exception instanceof JsonMappingException) {
-                // If it's a JsonMappingException, check if it's an UnrecognizedPropertyException
                 JsonMappingException jsonException = (JsonMappingException) exception;
                 if (jsonException instanceof UnrecognizedPropertyException) {
-                    // For UnrecognizedPropertyException, extract the field name and provide a more meaningful message
                     String fieldName = ((UnrecognizedPropertyException) jsonException).getPropertyName();
                     return Response.status(Response.Status.BAD_REQUEST)
                             .entity("Unrecognized field '" + fieldName + "' in the request. Error: " + exception.getMessage())

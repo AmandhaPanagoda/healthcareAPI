@@ -32,6 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Resource class for managing Doctor entities. This class provides RESTful
+ * endpoints for CRUD operations on doctors, as well as methods for searching
+ * doctors based on various criteria. Additionally, it provides methods for
+ * retrieving a doctor's appointments and prescriptions.
  *
  * @author Amandha
  */
@@ -53,10 +57,12 @@ public class DoctorResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Collection<Doctor> getAllDoctors() {
+        LOGGER.info("Fetching all doctor records");
         if (!doctorDAO.getAllDoctors().isEmpty()) {
             return doctorDAO.getAllDoctors().values();
         } else {
-            throw new ResourceNotFoundException("No records were found");
+            LOGGER.info("No records were found");
+            throw new ResourceNotFoundException("No records of doctors were found");
         }
     }
 
@@ -88,6 +94,9 @@ public class DoctorResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addDoctor(Doctor doctor) {
+        if (doctor == null) {
+            throw new BadRequestException("Doctor record cannot be null");
+        }
         LOGGER.info("Adding a new doctor");
 
         // Validate the doctor object
@@ -95,7 +104,7 @@ public class DoctorResource {
         if (validationError != null) {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
-        int newDoctorId = doctorDAO.addDoctor(doctor);
+        int newDoctorId = doctorDAO.addDoctor(doctor); // add the new doctor and get the new doctor id
         personDAO.addPerson(doctor); // add the doctor to the person list
 
         return Response.status(Response.Status.CREATED).entity("New doctor with ID: " + newDoctorId + " was added successfully").build();
@@ -116,26 +125,27 @@ public class DoctorResource {
             LOGGER.info("URL parameter doctor ID and the passed doctor ID do not match");
             return Response.status(Response.Status.CONFLICT).entity("The passed doctor IDs do not match").build();
         }
+
         LOGGER.info("Updating doctor with ID: " + doctorId);
         Doctor existingDoctor = doctorDAO.getDoctorById(doctorId);
 
         if (existingDoctor == null) {
             LOGGER.error("Doctor ID" + doctorId + " was not found");
-
             throw new ResourceNotFoundException("Error in updating! Doctor with ID " + doctorId + " was not found");
+
         } else if (existingDoctor.getPersonId() != updatedDoctor.getPersonId()) {
             String message = "Person ID of the doctor cannot be updated. Existing Person ID: " + existingDoctor.getPersonId() + ". Passed Person ID: " + updatedDoctor.getPersonId();
             LOGGER.info(message);
 
-            return Response.status(Response.Status.OK).entity(message).build();
+            return Response.status(Response.Status.CONFLICT).entity(message).build();
         } else {
             String validationError = ValidationHelper.validate(updatedDoctor);
             if (validationError != null) {
                 return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
             }
 
-            updatedDoctor.setDoctorId(doctorId);
-            doctorDAO.updateDoctor(updatedDoctor);
+            doctorDAO.updateDoctor(updatedDoctor); // update the doctor record
+            personDAO.updatePerson(updatedDoctor); // update the prson record
             LOGGER.info("Doctor record was updated. Updated Doctor ID: " + doctorId);
 
             return Response.status(Response.Status.OK).entity("Doctor with ID " + doctorId + " was updated successfully").build();
@@ -198,9 +208,7 @@ public class DoctorResource {
             if (!matchingDoctors.isEmpty()) {
                 return Response.ok(matchingDoctors).build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("No doctors found with the given search criteria")
-                        .build();
+                throw new ResourceNotFoundException("No doctors found with the given search criteria");
             }
         } catch (BadRequestException e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -222,7 +230,7 @@ public class DoctorResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDoctorAppointments(@PathParam("doctorId") int doctorId) {
         LOGGER.info("Searching for appointments of doctor with ID: " + doctorId);
-        List<Appointment> existingAppointments = appointmentDAO.getAppointmentByDoctorId(doctorId); // get patients appointments
+        List<Appointment> existingAppointments = appointmentDAO.getAppointmentByDoctorId(doctorId); // get doctors appointments
 
         if (!existingAppointments.isEmpty()) {
             return Response.ok().entity(existingAppointments).build();
@@ -244,7 +252,7 @@ public class DoctorResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDoctorPrescriptions(@PathParam("doctorId") int doctorId) {
         LOGGER.info("Searching for prescriptions of doctor with ID: " + doctorId);
-        List<Prescription> existingPrescriptions = prescriptionDAO.getPrescriptionByDoctorId(doctorId); // get patients appointments
+        List<Prescription> existingPrescriptions = prescriptionDAO.getPrescriptionByDoctorId(doctorId); // get prescriptions created by the doctor
 
         if (!existingPrescriptions.isEmpty()) {
             return Response.ok().entity(existingPrescriptions).build();

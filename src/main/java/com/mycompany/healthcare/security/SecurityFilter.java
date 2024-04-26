@@ -25,7 +25,7 @@ public class SecurityFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
-        boolean uri = requestContext.getUriInfo().getPath().contains("secure");
+        boolean uri = requestContext.getUriInfo().getPath().contains("/");
         if (uri) {
             List<String> authHeader = requestContext.getHeaders().get(AUTHORIZATION_HEADER_KEY);
             if (authHeader != null && !authHeader.isEmpty()) {
@@ -37,7 +37,7 @@ public class SecurityFilter implements ContainerRequestFilter {
                 String username = tokenizer.nextToken();
                 String password = tokenizer.nextToken();
 
-                if ("user".equals(username) && "password".equals(password)) {
+                if ("admin".equals(username) && "csarulz".equals(password)) {
                     return;
                 }
             }

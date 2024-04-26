@@ -26,6 +26,7 @@ import com.mycompany.healthcare.dao.AppointmentDAO;
 import com.mycompany.healthcare.dao.BillingDAO;
 import com.mycompany.healthcare.dao.MedicalRecordDAO;
 import com.mycompany.healthcare.dao.PatientDAO;
+import com.mycompany.healthcare.dao.PersonDAO;
 import com.mycompany.healthcare.dao.PrescriptionDAO;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
@@ -34,6 +35,8 @@ import com.mycompany.healthcare.model.Billing;
 import javax.ws.rs.QueryParam;
 
 /**
+ * Resource class for managing patient records. Provides endpoints for
+ * retrieving, adding, updating, and deleting patient records.
  *
  * @author Amandha
  */
@@ -43,6 +46,7 @@ public class PatientResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(PatientResource.class);
 
     private final PatientDAO patientDAO = new PatientDAO();
+    private final PersonDAO personDAO = new PersonDAO();
     private final MedicalRecordDAO medicalRecordDAO = new MedicalRecordDAO();
     private final AppointmentDAO appointmentDAO = new AppointmentDAO();
     private final PrescriptionDAO prescriptionDAO = new PrescriptionDAO();
@@ -58,7 +62,7 @@ public class PatientResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Collection<Patient> getAllPatients() {
         LOGGER.info("Fetching all patient records");
-        if (patientDAO.getAllPatients() != null) {
+        if (!patientDAO.getAllPatients().isEmpty()) {
             return patientDAO.getAllPatients().values();
         } else {
             throw new ResourceNotFoundException("No patient records were found");
@@ -101,13 +105,14 @@ public class PatientResource {
         }
         LOGGER.info("Adding a new patient");
 
-        // Validate the appointment object
+        // Validate the patient object
         String validationError = ValidationHelper.validate(patient);
         if (validationError != null) {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
 
-        int newPatientId = patientDAO.addPatient(patient); // add the new patient to the patients list
+        int newPatientId = patientDAO.addPatient(patient); // add the new patient to the patients list and get new patient id
+        personDAO.addPerson(patient); // add the new patient to person record
 
         return Response.status(Response.Status.CREATED).entity("New patient with ID: " + newPatientId + " was added successfully").build();
     }
@@ -143,12 +148,22 @@ public class PatientResource {
 
         Patient existingPatient = patientDAO.getPatientById(patientId);
 
-        if (existingPatient != null) {
-            patientDAO.updatePatient(updatedPatient); // update the patient record
-            String message = "Patient with ID " + patientId + " was successfully updated";
-            return Response.ok().entity(message).build(); // return a message indicating success
+        if (existingPatient == null) {
+            LOGGER.error("Patient ID" + patientId + " was not found");
+            throw new ResourceNotFoundException("Error in updating! Patient with ID " + patientId + " was not found");
+
+        } else if (existingPatient.getPersonId() != updatedPatient.getPersonId()) {
+            String message = "Person ID of the patient cannot be updated. Existing Person ID: " + existingPatient.getPersonId() + ". Passed Person ID: " + updatedPatient.getPersonId();
+            LOGGER.info(message);
+
+            return Response.status(Response.Status.CONFLICT).entity(message).build();
+
         } else {
-            throw new ResourceNotFoundException("Patient with ID " + patientId + " was not found");
+            patientDAO.updatePatient(updatedPatient); // update the patient record
+            personDAO.updatePerson(updatedPatient); // update the person record
+            String message = "Patient with ID " + patientId + " was successfully updated";
+
+            return Response.ok().entity(message).build(); // return a message indicating success
         }
     }
 
@@ -171,7 +186,7 @@ public class PatientResource {
             throw new ResourceNotFoundException("Patient with ID " + patientId + " was not found");
         }
     }
-    
+
     /**
      * Searches for patients based on the specified criteria.
      *
@@ -180,8 +195,8 @@ public class PatientResource {
      * @param minAge The minimum age of the patient (inclusive, optional).
      * @param maxAge The maximum age of the patient (inclusive, optional).
      * @param gender The gender of the patient (optional).
-     * @return A response containing the list of patients that match the specified criteria,
-     * or an appropriate error response if the search fails.
+     * @return A response containing the list of patients that match the
+     * specified criteria, or an appropriate error response if the search fails.
      */
     @GET
     @Path("/search")
@@ -209,9 +224,7 @@ public class PatientResource {
             if (!matchingPatients.isEmpty()) {
                 return Response.ok(matchingPatients).build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("No patients found with the given search criteria")
-                        .build();
+                throw new ResourceNotFoundException("No patients found with the given search criteria");
             }
         } catch (BadRequestException e) {
             return Response.status(Response.Status.BAD_REQUEST)
@@ -305,6 +318,88 @@ public class PatientResource {
             return Response.ok().entity(existingBills).build();
         } else {
             throw new ResourceNotFoundException("Patient with ID " + patientId + " does not have any bills");
+        }
+    }
+
+    /**
+     * Adds a medical record for a patient with the specified ID.
+     *
+     * @param patientId The ID of the patient for whom the medical record is
+     * being added.
+     * @param medicalRecord The medical record to be added.
+     * @return Response indicating the status of the operation.
+     * @throws ResourceNotFoundException if the patient is not found.
+     */
+    @POST
+    @Path("/{patientId}/medical-records")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response addPatientMedicalRecord(@PathParam("patientId") int patientId, MedicalRecord medicalRecord) {
+        if (medicalRecord == null) {
+            throw new BadRequestException("Medical record cannot be null");
+        }
+
+        LOGGER.info("Searching for patient with ID: " + patientId);
+        Patient existingPatient = patientDAO.getPatientById(patientId); // check if the patient exists
+
+        LOGGER.info("Searching for medical record of patient with ID: " + patientId);
+        MedicalRecord existingMedicalRecord = medicalRecordDAO.getMedicalRecordByPatientId(patientId); // check if patient already has a medical record
+
+        if (existingPatient != null && existingMedicalRecord == null) {
+            LOGGER.info("Adding a new medical record");
+            medicalRecord.setPatient(existingPatient);
+
+            // Validate the medical record object
+            String validationError = ValidationHelper.validate(medicalRecord);
+            if (validationError != null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
+            }
+
+            int newMedicalRecordId = medicalRecordDAO.addMedicalRecord(medicalRecord);
+            return Response.status(Response.Status.CREATED).entity("New medical record with ID: " + newMedicalRecordId + " was added successfully").build();
+        } else if (existingPatient == null) {
+            throw new ResourceNotFoundException("Patient with ID " + patientId + " was not found");
+        } else {
+            String message = "Patient with ID " + patientId + " already has a medical record";
+            return Response.ok().entity(message).build();
+        }
+    }
+
+    /**
+     * Updates the medical record of a patient with the specified ID.
+     *
+     * @param patientId The ID of the patient whose medical record is being
+     * updated.
+     * @param updatedMedicalRecord The updated medical record.
+     * @return Response indicating the status of the operation.
+     * @throws ResourceNotFoundException if the patient or the medical record is
+     * not found.
+     */
+    @PUT
+    @Path("/{patientId}/medical-records")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updatePatientMedicalRecord(@PathParam("patientId") int patientId, MedicalRecord updatedMedicalRecord) {
+
+        Patient existingPatient = patientDAO.getPatientById(patientId); // check if the patient exists
+        MedicalRecord existingMedicalRecord = medicalRecordDAO.getMedicalRecordByPatientId(patientId); // check if patient already has a medical record
+
+        if (existingPatient != null && existingMedicalRecord != null) {
+            if (updatedMedicalRecord.getMedicalRecordId() != existingMedicalRecord.getMedicalRecordId()) {
+                LOGGER.info("URL parameter medical record ID and the passed medical record ID do not match");
+                return Response.status(Response.Status.CONFLICT).entity("IDs are immutable. The passed medical record IDs do not match").build();
+            }
+            updatedMedicalRecord.setPatient(existingPatient); //set the patient details in the medical record
+
+            // Validate the medical record object
+            String validationError = ValidationHelper.validate(updatedMedicalRecord);
+            if (validationError != null) {
+                return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
+            }
+
+            medicalRecordDAO.updateMedicalRecord(updatedMedicalRecord); //update the patients medical record
+            String message = "Medical record of the  " + patientId + " was successfully updated";
+            return Response.ok().entity(message).build(); // return a message indicating success
+        } else {
+            throw new ResourceNotFoundException("Patient with ID " + patientId + " was not found");
         }
     }
 }

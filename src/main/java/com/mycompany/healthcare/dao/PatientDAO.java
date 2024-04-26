@@ -14,7 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Data Access Object (DAO) class for managing Patient objects.
+ * Provides methods for retrieving, adding, updating, and deleting patient records.
+ * Includes static data for initial patients.
+ * 
  * @author Amandha
  */
 public class PatientDAO {

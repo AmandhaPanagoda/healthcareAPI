@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 public class MedicalRecordDAO {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MedicalRecordDAO.class);
-    // Use a HashMap with medicalRecordId as key and MedicalRecord as value
     private static final Map<Integer, MedicalRecord> medicalRecords = new HashMap<>();
 
     static {

@@ -13,9 +13,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-;
-
 /**
+ * Data Access Object (DAO) for managing Person objects. This class provides
+ * methods for retrieving, adding, updating, and deleting Person objects.
  *
  * @author Amandha
  */

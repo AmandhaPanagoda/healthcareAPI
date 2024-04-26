@@ -23,6 +23,8 @@ public class RequestLoggingFilter implements Filter {
     
     /**
      * Initializes the filter.
+     * @param filterConfig
+     * @throws javax.servlet.ServletException
      */
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
@@ -31,6 +33,11 @@ public class RequestLoggingFilter implements Filter {
 
     /**
      * Logs the incoming request.
+     * @param request
+     * @param response
+     * @param chain
+     * @throws java.io.IOException
+     * @throws javax.servlet.ServletException
      */
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)

@@ -26,7 +26,9 @@ import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
 
 /**
- *
+ * RESTful web service resource for managing people.
+ * This resource provides endpoints for retrieving, adding, updating, and deleting people records.
+ * 
  * @author Amandha
  */
 @Path("/people")
@@ -34,17 +36,30 @@ public class PersonResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PersonResource.class);
     private final PersonDAO personDAO = new PersonDAO();
-
+    
+    /**
+     * Retrieves all people records.
+     * @return A collection of Person objects.
+     * @throws ResourceNotFoundException If no records are found.
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Collection<Person> getAllPeople() {
-        if (personDAO.getAllPeople() != null) {
+        LOGGER.info("Fetching all person records");
+        if (!personDAO.getAllPeople().isEmpty()) {
             return personDAO.getAllPeople().values();
         } else {
+            LOGGER.info("No records were found");
             throw new ResourceNotFoundException("No records were found");
         }
     }
-
+    
+    /**
+     * Retrieves a person record by ID.
+     * @param personId The ID of the person to retrieve.
+     * @return The Person object with the specified ID.
+     * @throws ResourceNotFoundException If the person with the specified ID is not found.
+     */
     @GET
     @Path("/{personId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -57,10 +72,19 @@ public class PersonResource {
             throw new ResourceNotFoundException("Person with ID " + personId + " was not found");
         }
     }
-
+    
+    /**
+     * Adds a new person record.
+     * @param person The Person object to add.
+     * @return A Response object with status 201 (Created) and a message indicating the new person ID, if successful.
+     *         A Response object with status 400 (Bad Request) and an error message if the person object is not valid.
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addPerson(Person person) {
+        if (person == null) {
+            throw new BadRequestException("Person record cannot be null");
+        }
         LOGGER.info("Adding a new person");
 
         // Validate the person object
@@ -69,23 +93,30 @@ public class PersonResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
 
-        int newPersonId = personDAO.addPerson(person);
+        int newPersonId = personDAO.addPerson(person); // add the new person and get new person id
         return Response.status(Response.Status.CREATED).entity("New person with ID: " + newPersonId + " was added successfully").build();
     }
-
+    
+    /**
+     * Updates an existing person record.
+     * @param personId The ID of the person to update.
+     * @param updatedPerson The updated Person object.
+     * @return A Response object with status 200 (OK) and a message indicating the successful update, if successful.
+     *         A Response object with status 404 (Not Found) if the person with the specified ID is not found.
+     *         A Response object with status 409 (Conflict) if the person IDs in the URL and the passed person object do not match.
+     */
     @PUT
     @Path("/{personId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updatePerson(@PathParam("personId") int personId, Person updatedPerson) {
         if (personId != updatedPerson.getPersonId()) {
             LOGGER.info("URL parameter person ID and the passed person ID do not match");
-            return Response.status(Response.Status.OK).entity("The passed person IDs do not match").build();
+            return Response.status(Response.Status.CONFLICT).entity("The passed person IDs do not match").build();
         }
         LOGGER.info("Updating person with ID: " + personId);
         Person existingPerson = personDAO.getPersonById(personId);
 
         if (existingPerson != null) {
-            updatedPerson.setPersonId(personId);
             personDAO.updatePerson(updatedPerson);
             LOGGER.info("Person record was updated. Updated Person ID: " + personId);
             return Response.status(Response.Status.OK).entity("Person with ID " + personId + " was updated successfully").build();
@@ -94,7 +125,13 @@ public class PersonResource {
             throw new ResourceNotFoundException("Person with ID " + personId + " was not found");
         }
     }
-
+    
+    /**
+     * Deletes a person record.
+     * @param personId The ID of the person to delete.
+     * @return A Response object with status 200 (OK) and a message indicating the successful deletion, if successful.
+     *         A Response object with status 404 (Not Found) if the person with the specified ID is not found.
+     */
     @DELETE
     @Path("/{personId}")
     public Response deletePerson(@PathParam("personId") int personId) {
@@ -105,7 +142,18 @@ public class PersonResource {
             throw new ResourceNotFoundException("Person with ID " + personId + " was not found");
         }
     }
-
+    
+    /**
+     * Searches for people based on specified criteria.
+     * @param firstName The first name of the person to search for.
+     * @param lastName The last name of the person to search for.
+     * @param minAge The minimum age of the person to search for.
+     * @param maxAge The maximum age of the person to search for.
+     * @param gender The gender of the person to search for.
+     * @return A Response object with status 200 (OK) and a list of matching Person objects, if any are found.
+     *         A Response object with status 404 (Not Found) if no matching people are found.
+     *         A Response object with status 400 (Bad Request) if there is an error in the search criteria.
+     */
     @GET
     @Path("/search")
     @Produces(MediaType.APPLICATION_JSON)
@@ -124,8 +172,8 @@ public class PersonResource {
                 && (minAge == null)
                 && (maxAge == null)
                 && (gender == null || gender.isEmpty())) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("At least one search criteria is required")
+            return Response.status(Response.Status.OK)
+                    .entity(getAllPeople())
                     .build();
         }
 
@@ -134,11 +182,10 @@ public class PersonResource {
             if (!matchingPeople.isEmpty()) {
                 return Response.ok(matchingPeople).build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("No people found with the given search criteria")
-                        .build();
+                throw new ResourceNotFoundException("No people were found with the given search criteria");
             }
         } catch (BadRequestException e) {
+            LOGGER.error("An error occured : " + e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(e.getMessage())
                     .build();

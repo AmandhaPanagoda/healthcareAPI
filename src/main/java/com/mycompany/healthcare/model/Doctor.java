@@ -8,13 +8,15 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
 
 /**
+ * Model class representing a Doctor entity. Extends the Person class and adds a
+ * specialization field. Provides getter and setters for all fields.
  *
  * @author Amandha
  */
 public class Doctor extends Person {
-    
+
     private int doctorId;
-    
+
     @NotEmpty(message = "Specialization is required")
     @Pattern(regexp = "[a-zA-Z]+", message = "Specialization can only contain letters")
     private String specialization;
@@ -42,5 +44,5 @@ public class Doctor extends Person {
 
     public void setSpecialization(String specialization) {
         this.specialization = specialization;
-    }   
+    }
 }

@@ -22,8 +22,10 @@ import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- *
+/*
+ * RESTful web service resource class for managing Prescription objects.
+ * Provides endpoints for retrieving, adding, updating, and deleting prescriptions.
+ * 
  * @author Amandha
  */
 @Path("/prescriptions")
@@ -32,16 +34,30 @@ public class PrescriptionResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(PrescriptionResource.class);
     private final PrescriptionDAO prescriptionDAO = new PrescriptionDAO();
 
+    /**
+     * Retrieves all prescriptions.
+     *
+     * @return Collection of prescriptions.
+     * @throws ResourceNotFoundException if no prescriptions are found.
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Collection<Prescription> getAllPrescriptions() {
-        if (prescriptionDAO.getAllPrescriptions() != null) {
+        if (!prescriptionDAO.getAllPrescriptions().isEmpty()) {
             return prescriptionDAO.getAllPrescriptions().values();
         } else {
-            throw new ResourceNotFoundException("No records were found");
+            throw new ResourceNotFoundException("No prescriptions were found");
         }
     }
 
+    /**
+     * Retrieves a prescription by ID.
+     *
+     * @param prescriptionId The ID of the prescription to retrieve.
+     * @return The prescription with the specified ID.
+     * @throws ResourceNotFoundException if the prescription with the specified
+     * ID is not found.
+     */
     @GET
     @Path("/{prescriptionId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -55,6 +71,12 @@ public class PrescriptionResource {
         }
     }
 
+    /**
+     * Adds a new prescription.
+     *
+     * @param prescription The prescription to add.
+     * @return Response indicating the success of the operation.
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addPrescription(Prescription prescription) {
@@ -70,28 +92,42 @@ public class PrescriptionResource {
         return Response.status(Response.Status.CREATED).entity("New prescription with ID: " + newPrescriptionId + " was added successfully").build();
     }
 
+    /**
+     * Updates a prescription.
+     *
+     * @param prescriptionId The ID of the prescription to update.
+     * @param updatedPrescription The updated prescription information.
+     * @return Response indicating the success of the operation.
+     */
     @PUT
     @Path("/{prescriptionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updatePrescription(@PathParam("prescriptionId") int prescriptionId, Prescription updatedPrescription) {
         if (prescriptionId != updatedPrescription.getPrescriptionId()) {
             LOGGER.info("URL parameter prescription ID and the passed prescription ID do not match");
-            return Response.status(Response.Status.OK).entity("The passed prescription IDs do not match").build();
+            return Response.status(Response.Status.CONFLICT).entity("The passed prescription IDs do not match").build();
         }
         LOGGER.info("Updating prescription with ID: " + prescriptionId);
         Prescription existingPrescription = prescriptionDAO.getPrescriptionById(prescriptionId);
 
         if (existingPrescription != null) {
-            updatedPrescription.setPrescriptionId(prescriptionId);
             prescriptionDAO.updatePrescription(updatedPrescription);
             LOGGER.info("Prescription record was updated. Updated Prescription ID: " + prescriptionId);
             return Response.status(Response.Status.OK).entity("Prescription with ID " + prescriptionId + " was updated successfully").build();
         } else {
-            LOGGER.error("Prescription ID" + prescriptionId + " was not found");
+            LOGGER.error("Prescription ID " + prescriptionId + " was not found");
             throw new ResourceNotFoundException("Prescription with ID " + prescriptionId + " was not found");
         }
     }
 
+    /**
+     * Deletes a prescription.
+     *
+     * @param prescriptionId The ID of the prescription to delete.
+     * @return Response indicating the success of the operation.
+     * @throws ResourceNotFoundException if the prescription with the specified
+     * ID is not found.
+     */
     @DELETE
     @Path("/{prescriptionId}")
     public Response deletePrescription(@PathParam("prescriptionId") int prescriptionId) {

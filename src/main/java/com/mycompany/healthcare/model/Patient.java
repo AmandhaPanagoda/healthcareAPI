@@ -4,21 +4,22 @@
  */
 package com.mycompany.healthcare.model;
 
-import javax.validation.constraints.Min;
-
 /**
+ * Model class representing a patient, extending the Person class. Includes
+ * patient-specific fields such as patient ID, health status, and medical
+ * history. Provides getter and setters for accessing and updating patient
+ * information.
  *
  * @author Amandha
  */
-
 public class Patient extends Person {
-    
+
     private int patientId;
     private String healthStatus;
     private String medicalHistory;
-    
+
     public Patient() {
-        
+
     }
 
     public Patient(int patientId, int personId, String firstName, String lastName, long contactNo, String address, String gender, int age, String healthStatus, String medicalHistory) {
