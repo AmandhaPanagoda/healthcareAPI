@@ -5,10 +5,11 @@
 package com.mycompany.healthcare.resource;
 
 import com.mycompany.healthcare.dao.AppointmentDAO;
+import com.mycompany.healthcare.exception.ModelIdMismatchException;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
-import java.util.List;
 import com.mycompany.healthcare.model.Appointment;
+import java.util.List;
 import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 /**
- *
+ * Resource class for managing appointments.
+ * 
  * @author Amandha
  */
 @Path("/appointments")
@@ -35,18 +37,32 @@ public class AppointmentResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(AppointmentResource.class);
     private final AppointmentDAO appointmentDAO = new AppointmentDAO();
 
+    /**
+     * Retrieves all appointments.
+     *
+     * @return A collection of all appointments.
+     * @throws ResourceNotFoundException If no appointments are found.
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Collection<Appointment> getAllAppointments() {
         LOGGER.info("Getting all appointments");
-        if (appointmentDAO.getAllAppointments() != null) {
+        if (!appointmentDAO.getAllAppointments().isEmpty()) {
             return appointmentDAO.getAllAppointments().values();
         } else {
             LOGGER.info("No appointments were found");
-            throw new ResourceNotFoundException("No records were found");
+            throw new ResourceNotFoundException("No appointments were found");
         }
     }
 
+    /**
+     * Retrieves an appointment by its ID.
+     *
+     * @param appointmentId The ID of the appointment to retrieve.
+     * @return The appointment with the specified ID.
+     * @throws ResourceNotFoundException If no appointment is found with the
+     * given ID.
+     */
     @GET
     @Path("/{appointmentId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -61,6 +77,12 @@ public class AppointmentResource {
         }
     }
 
+    /**
+     * Adds a new appointment.
+     *
+     * @param appointment The appointment to add.
+     * @return A response indicating the success of the operation.
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addAppointment(Appointment appointment) {
@@ -76,6 +98,13 @@ public class AppointmentResource {
         return Response.status(Response.Status.CREATED).entity("New appointment with ID: " + newAppointmentId + " was added successfully").build();
     }
 
+    /**
+     * Updates an existing appointment.
+     *
+     * @param appointmentId The ID of the appointment to update.
+     * @param updatedAppointment The updated appointment object.
+     * @return A response indicating the success of the operation.
+     */
     @PUT
     @Path("/{appointmentId}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -89,7 +118,7 @@ public class AppointmentResource {
 
         if (appointmentId != updatedAppointment.getAppointmentId()) { // IDs are immutable when updating
             LOGGER.info("URL parameter appointment ID and the passed appointment ID do not match");
-            return Response.status(Response.Status.OK).entity("IDs are immutable. The passed appointment IDs do not match").build();
+            throw new ModelIdMismatchException("IDs are immutable. The passed appointment IDs do not match");
         }
 
         LOGGER.info("Updating appointment with ID: " + appointmentId);
@@ -105,6 +134,12 @@ public class AppointmentResource {
         }
     }
 
+    /**
+     * Deletes an appointment by its ID.
+     *
+     * @param appointmentId The ID of the appointment to delete.
+     * @return A response indicating the success of the operation.
+     */
     @DELETE
     @Path("/{appointmentId}")
     public Response deleteAppointment(@PathParam("appointmentId") int appointmentId) {
@@ -117,6 +152,21 @@ public class AppointmentResource {
         }
     }
 
+    /**
+     * Searches for appointments based on the provided criteria.
+     *
+     * @param patientFirstName The first name of the patient.
+     * @param patientLastName The last name of the patient.
+     * @param doctorFirstName The first name of the doctor.
+     * @param doctorLastName The last name of the doctor.
+     * @param fromDate The start date of the appointment.
+     * @param toDate The end date of the appointment.
+     * @param specialization The specialization of the doctor.
+     * @return A response containing a list of appointments matching the
+     * criteria.
+     * @throws ResourceNotFoundException If no appointments are found with the
+     * given criteria.
+     */
     @GET
     @Path("/search")
     @Produces(MediaType.APPLICATION_JSON)
@@ -154,9 +204,7 @@ public class AppointmentResource {
             if (!matchingAppointments.isEmpty()) {
                 return Response.ok(matchingAppointments).build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("No appointments found with the given search criteria")
-                        .build();
+                throw new ResourceNotFoundException("No appointments found with the given search criteria");
             }
         } catch (BadRequestException e) {
             LOGGER.error("An error occured when processing the request. Message: " + e.getMessage());

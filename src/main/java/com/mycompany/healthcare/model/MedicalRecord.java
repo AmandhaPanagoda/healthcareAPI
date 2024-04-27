@@ -9,7 +9,9 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 /**
- *
+ * Represents a medical record containing information about a patient's medical history,
+ * including allergies, diagnosis, treatment, and blood group.
+ * 
  * @author Amandha
  */
 public class MedicalRecord {
@@ -24,7 +26,7 @@ public class MedicalRecord {
     private String treatment;
 
     @NotEmpty(message = "Blood Group is required")
-    @Pattern(regexp = "^(A|B|AB|O)[+-]$", message = "Please enter a valid Blood Group")
+    @Pattern(regexp = "^(A|B|AB|O)[+-]$", message = "Invalid Blood Group")
     private String bloodGroup;
 
     public MedicalRecord() {

@@ -21,7 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Data Access Object (DAO) class for managing billing 
+ * Provides methods for retrieving, adding, updating, and deleting billing records.
+ * 
  * @author Amandha
  */
 public class BillingDAO {
@@ -166,7 +168,7 @@ public class BillingDAO {
             try {
                 billDate = parseSimpleDate(bill.getBillDate());
             } catch (ParseException e) {
-                LOGGER.error("Error parsing appointment date: {}", e.getMessage());
+                LOGGER.error("Error parsing the billed date: {}", e.getMessage());
             }
 
             boolean matchPatientFirstName = patientFirstName == null || patientFirstName.equalsIgnoreCase(patient.getFirstName());

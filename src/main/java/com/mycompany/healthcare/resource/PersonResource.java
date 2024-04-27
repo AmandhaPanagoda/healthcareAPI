@@ -22,6 +22,7 @@ import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.mycompany.healthcare.dao.PersonDAO;
+import com.mycompany.healthcare.exception.ModelIdMismatchException;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
 
@@ -39,12 +40,13 @@ public class PersonResource {
     
     /**
      * Retrieves all people records.
+     * @param sortMethod
      * @return A collection of Person objects.
      * @throws ResourceNotFoundException If no records are found.
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Collection<Person> getAllPeople() {
+    public Collection<Person> getAllPeople(@QueryParam("sort") String sortMethod) {
         LOGGER.info("Fetching all person records");
         if (!personDAO.getAllPeople().isEmpty()) {
             return personDAO.getAllPeople().values();
@@ -111,7 +113,7 @@ public class PersonResource {
     public Response updatePerson(@PathParam("personId") int personId, Person updatedPerson) {
         if (personId != updatedPerson.getPersonId()) {
             LOGGER.info("URL parameter person ID and the passed person ID do not match");
-            return Response.status(Response.Status.CONFLICT).entity("The passed person IDs do not match").build();
+            throw new ModelIdMismatchException("The passed person IDs do not match");
         }
         LOGGER.info("Updating person with ID: " + personId);
         Person existingPerson = personDAO.getPersonById(personId);
@@ -173,7 +175,7 @@ public class PersonResource {
                 && (maxAge == null)
                 && (gender == null || gender.isEmpty())) {
             return Response.status(Response.Status.OK)
-                    .entity(getAllPeople())
+                    .entity(getAllPeople(null))
                     .build();
         }
 

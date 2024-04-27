@@ -9,24 +9,31 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 /**
+ * Represents a prescription for medication. This class contains information
+ * about the prescription including the patient it is prescribed for, the doctor
+ * who prescribed it, the date of prescription, medication details, dosage
+ * instructions, and duration.
  *
  * @author Amandha
  */
 public class Prescription {
 
     private int prescriptionId;
-    
+
     @NotNull(message = "Patient is required")
     private Patient prescribedFor;
-    
+
     @NotNull(message = "Doctor is required")
     private Doctor prescribedBy;
-    
+
     @NotEmpty(message = "Date is required")
     @Pattern(regexp = "\\d{2}-\\d{2}-\\d{4}", message = "Date must be in the format dd-mm-yyyy")
     private String prescribedDate;
     
+    @NotNull(message = "Medication information is required")
     private String medication;
+    
+    @NotNull(message = "Instructions are required")
     private String instruction;
     private String dosage;
     private String duration;

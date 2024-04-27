@@ -16,6 +16,10 @@ import java.util.function.Function;
 public class Helper<T> {
 
     public int getNextId(List<T> list, Function<T, Integer> getIdFunction) {
+        if (list.isEmpty()) {
+            return 1; // If the list is empty, return 1 as the next ID
+        }
+        
         int maxId = Integer.MIN_VALUE;
 
         // Iterate through the list to find the maximum ID
@@ -46,5 +50,4 @@ public class Helper<T> {
 
         return maxId + 1;
     }
-
 }

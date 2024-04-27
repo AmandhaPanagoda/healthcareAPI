@@ -13,18 +13,18 @@ import java.util.Date;
  * @author Amandha
  */
 public class SimpleDateFormatHelper {
-    
+
     public static String formatSimpleDate(Date date) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
         return dateFormat.format(date);
     }
-    
+
     public static String formatSimpleTime(Date date) {
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
         return timeFormat.format(date);
     }
-    
-        public static Date parseSimpleDate(String dateString) throws ParseException {
+
+    public static Date parseSimpleDate(String dateString) throws ParseException {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
         return dateFormat.parse(dateString);
     }

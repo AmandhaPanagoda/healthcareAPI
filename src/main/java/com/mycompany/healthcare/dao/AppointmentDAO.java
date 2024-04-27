@@ -5,8 +5,8 @@
 package com.mycompany.healthcare.dao;
 
 import com.mycompany.healthcare.helper.Helper;
+import static com.mycompany.healthcare.helper.SimpleDateFormatHelper.parseSimpleDate;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -19,6 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Data Access Object (DAO) class for managing appointments in the healthcare
+ * system. Provides methods for CRUD operations and searching appointments based
+ * on various criteria.
  *
  * @author Amandha
  */
@@ -27,7 +30,6 @@ public class AppointmentDAO {
     private static final Logger LOGGER = LoggerFactory.getLogger(AppointmentDAO.class);
     private static final Map<Integer, Appointment> appointments = new HashMap<>();
 
-    // Static block to initialize some sample appointment records
     static {
         Doctor doctor1 = new Doctor(1, "Cardiologist", 1, "Eric", "Anderson", 1234548548, "684 Delaware Avenue, SF", "M", 45);
         Patient patient1 = new Patient(1, 3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
@@ -183,16 +185,15 @@ public class AppointmentDAO {
         List<Appointment> matchingAppointments = new ArrayList<>();
 
         // Parse fromDate and toDate strings to Date objects
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy");
         Date fromDate = null;
         Date toDate = null;
 
         try {
             if (fromDateStr != null && !fromDateStr.isEmpty()) {
-                fromDate = dateFormat.parse(fromDateStr);
+                fromDate = parseSimpleDate(fromDateStr);
             }
             if (toDateStr != null && !toDateStr.isEmpty()) {
-                toDate = dateFormat.parse(toDateStr);
+                toDate = parseSimpleDate(toDateStr);
             }
         } catch (ParseException e) {
             LOGGER.error("Error parsing dates: {}", e.getMessage());
@@ -207,9 +208,9 @@ public class AppointmentDAO {
             // Parse appointment date string to Date object
             Date appointmentDate = null;
             try {
-                appointmentDate = dateFormat.parse(appointment.getDate());
+                appointmentDate = parseSimpleDate(appointment.getDate());
             } catch (ParseException e) {
-                LOGGER.error("Error parsing appointment date: {}", e.getMessage());
+                LOGGER.error("Error parsing the appointment date: {}", e.getMessage());
             }
 
             boolean matchPatientFirstName = patientFirstName == null || patientFirstName.equalsIgnoreCase(patient.getFirstName());

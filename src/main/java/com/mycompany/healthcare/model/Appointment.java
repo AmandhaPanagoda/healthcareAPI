@@ -4,17 +4,16 @@
  */
 package com.mycompany.healthcare.model;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
 
 /**
- *
+ * Represents an appointment between the doctor and the patient
+ * 
  * @author Amandha
  */
 public class Appointment {
 
-    @Min(value = 1, message = "Appointment ID must be a positive integer")
     private int appointmentId;
 
     @NotEmpty(message = "Date is required")

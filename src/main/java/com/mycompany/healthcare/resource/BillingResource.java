@@ -4,8 +4,8 @@
  */
 package com.mycompany.healthcare.resource;
 
-import com.mycompany.healthcare.dao.AppointmentDAO;
 import com.mycompany.healthcare.dao.BillingDAO;
+import com.mycompany.healthcare.exception.ModelIdMismatchException;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
 import java.util.List;
@@ -27,25 +27,42 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Resource class for managing billing records in the healthcare system.
+ * Provides endpoints for retrieving, adding, updating, and deleting billing
+ * records.
  *
  * @author Amandha
  */
 @Path("bills")
 public class BillingResource {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(BillingResource.class);
     private final BillingDAO billingDAO = new BillingDAO();
 
+    /**
+     * Retrieves all billing records.
+     *
+     * @return A collection of billing records.
+     * @throws ResourceNotFoundException if no records were found.
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Collection<Billing> getAllBills() {
-        if (billingDAO.getAllBills() != null) {
+        if (!billingDAO.getAllBills().isEmpty()) {
             return billingDAO.getAllBills().values();
         } else {
             throw new ResourceNotFoundException("No records were found");
         }
     }
 
+    /**
+     * Retrieves a billing record by its ID.
+     *
+     * @param billId The ID of the billing record to retrieve.
+     * @return The billing record.
+     * @throws ResourceNotFoundException if the record with the specified ID was
+     * not found.
+     */
     @GET
     @Path("/{billId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -59,6 +76,12 @@ public class BillingResource {
         }
     }
 
+    /**
+     * Adds a new billing record.
+     *
+     * @param bill The billing record to add.
+     * @return A response indicating the success of the operation.
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addBill(Billing bill) {
@@ -74,13 +97,20 @@ public class BillingResource {
         return Response.status(Response.Status.CREATED).entity("New bill with ID: " + newBillId + " was added successfully").build();
     }
 
+    /**
+     * Updates an existing billing record.
+     *
+     * @param billId The ID of the billing record to update.
+     * @param updatedBill The updated billing record.
+     * @return A response indicating the success of the operation.
+     */
     @PUT
     @Path("/{billId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateBill(@PathParam("billId") int billId, Billing updatedBill) {
         if (billId != updatedBill.getBillId()) {
             LOGGER.info("URL parameter bill ID and the passed bill ID do not match");
-            return Response.status(Response.Status.OK).entity("The passed bill IDs do not match").build();
+            throw new ModelIdMismatchException("The passed bill IDs do not match");
         }
         LOGGER.info("Updating bill with ID: " + billId);
         Billing existingBill = billingDAO.getBillById(billId);
@@ -96,6 +126,12 @@ public class BillingResource {
         }
     }
 
+    /**
+     * Deletes a billing record.
+     *
+     * @param billId The ID of the billing record to delete.
+     * @return A response indicating the success of the operation.
+     */
     @DELETE
     @Path("/{billId}")
     public Response deleteBill(@PathParam("billId") int billId) {
@@ -107,6 +143,15 @@ public class BillingResource {
         }
     }
 
+    /**
+     * Searches for billing records based on specified criteria.
+     *
+     * @param patientFirstName The first name of the patient.
+     * @param patientLastName The last name of the patient.
+     * @param startBillDate The start date of the billing record.
+     * @param endBillDate The end date of the billing record.
+     * @return A response containing the matching billing records.
+     */
     @GET
     @Path("/search")
     @Produces(MediaType.APPLICATION_JSON)
@@ -131,9 +176,7 @@ public class BillingResource {
             if (!matchingBills.isEmpty()) {
                 return Response.ok(matchingBills).build();
             } else {
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("No bills found with the given search criteria")
-                        .build();
+                throw new ResourceNotFoundException("No bills found with the given search criteria");
             }
         } catch (BadRequestException e) {
             return Response.status(Response.Status.BAD_REQUEST)

@@ -5,10 +5,14 @@
 package com.mycompany.healthcare.dao;
 
 import com.mycompany.healthcare.helper.Helper;
+import static com.mycompany.healthcare.helper.SimpleDateFormatHelper.parseSimpleDate;
 import com.mycompany.healthcare.model.Doctor;
 import com.mycompany.healthcare.model.Patient;
 import com.mycompany.healthcare.model.Prescription;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Data Access Object (DAO) for managing prescriptions. This class provides
+ * methods to interact with the database to perform CRUD (Create, Read, Update,
+ * Delete) operations on Prescription objects.
  *
  * @author Amandha
  */
@@ -73,8 +80,8 @@ public class PrescriptionDAO {
         }
         return matchingPrescriptions;
     }
-    
-     /**
+
+    /**
      * Retrieves prescriptions associated with a doctor ID.
      *
      * @param doctorId The ID of the patient.
@@ -145,5 +152,68 @@ public class PrescriptionDAO {
             LOGGER.warn("Prescription with ID " + prescriptionId + " not found, cannot delete");
             return false;
         }
+    }
+
+    /**
+     * Searches for prescriptions based on the specified criteria.
+     *
+     * @param patientFirstName The first name of the patient (optional).
+     * @param patientLastName The last name of the patient (optional).
+     * @param doctorFirstName The first name of the doctor (optional).
+     * @param doctorLastName The last name of the doctor (optional).
+     * @param fromDateStr The start date range for the prescription (optional,
+     * format: "dd-MM-yyyy").
+     * @param toDateStr The end date range for the prescription (optional,
+     * format: "dd-MM-yyyy").
+     * @return A list of prescriptions that match the specified criteria.
+     */
+    public List<Prescription> searchPrescriptions(String patientFirstName, String patientLastName, String doctorFirstName, String doctorLastName, String fromDateStr, String toDateStr) {
+        LOGGER.info("Searching for prescriptions with criteria - Patient First Name: {}, Patient Last Name: {}, Doctor First Name: {}, Doctor Last Name: {}, From Date: {}, To Date: {}",
+                patientFirstName, patientLastName, doctorFirstName, doctorLastName, fromDateStr, toDateStr);
+
+        List<Prescription> matchingPrescriptions = new ArrayList<>();
+
+        // Parse fromDate and toDate strings to Date objects
+        Date fromDate = null;
+        Date toDate = null;
+
+        try {
+            if (fromDateStr != null && !fromDateStr.isEmpty()) {
+                fromDate = parseSimpleDate(fromDateStr);
+            }
+            if (toDateStr != null && !toDateStr.isEmpty()) {
+                toDate = parseSimpleDate(toDateStr);
+            }
+        } catch (ParseException e) {
+            LOGGER.error("Error parsing dates: {}", e.getMessage());
+            return matchingPrescriptions;
+        }
+
+        for (Prescription prescription : prescriptions.values()) {
+
+            Patient patient = prescription.getPrescribedFor();
+            Doctor doctor = prescription.getPrescribedBy();
+
+            // Parse prescription date string to Date object
+            Date prescriptionDate = null;
+            try {
+                prescriptionDate = parseSimpleDate(prescription.getPrescribedDate());
+            } catch (ParseException e) {
+                LOGGER.error("Error parsing the prescribed date: {}", e.getMessage());
+            }
+
+            boolean matchPatientFirstName = patientFirstName == null || patientFirstName.equalsIgnoreCase(patient.getFirstName());
+            boolean matchPatientLastName = patientLastName == null || patientLastName.equalsIgnoreCase(patient.getLastName());
+            boolean matchDoctorFirstName = doctorFirstName == null || doctorFirstName.equalsIgnoreCase(doctor.getFirstName());
+            boolean matchDoctorLastName = doctorLastName == null || doctorLastName.equalsIgnoreCase(doctor.getLastName());
+            boolean matchDateRange = (fromDate == null || prescriptionDate.compareTo(fromDate) >= 0)
+                    && (toDate == null || prescriptionDate.compareTo(toDate) <= 0);
+
+            if (matchPatientFirstName && matchPatientLastName && matchDoctorFirstName
+                    && matchDoctorLastName && matchDateRange) {
+                matchingPrescriptions.add(prescription);
+            }
+        }
+        return matchingPrescriptions;
     }
 }

@@ -15,7 +15,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Data Access Object (DAO) class for managing MedicalRecord objects.
+ * Provides methods for CRUD operations and searching for medical records.
+ * 
  * @author Amandha
  */
 public class MedicalRecordDAO {

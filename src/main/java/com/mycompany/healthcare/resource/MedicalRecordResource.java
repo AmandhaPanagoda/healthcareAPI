@@ -5,6 +5,7 @@
 package com.mycompany.healthcare.resource;
 
 import com.mycompany.healthcare.dao.MedicalRecordDAO;
+import com.mycompany.healthcare.exception.ModelIdMismatchException;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
 import java.util.List;
@@ -26,7 +27,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * RESTful resource class for managing medical records 
+ * Provides endpoints for CRUD operations and searching medical records based on various criteria.
+ * 
  * @author Amandha
  */
 @Path("/medical-records")
@@ -46,7 +49,7 @@ public class MedicalRecordResource {
     public Collection<MedicalRecord> getAllMedicalRecords() {
         LOGGER.info("Fetching all medical records");
 
-        if (medicalRecordDAO.getAllMedicalRecords() != null) {
+        if (!medicalRecordDAO.getAllMedicalRecords().isEmpty()) {
             return medicalRecordDAO.getAllMedicalRecords().values(); //return all the medical records 
         } else {
             LOGGER.info("No medical records were found");
@@ -110,9 +113,7 @@ public class MedicalRecordResource {
                 return Response.ok(matchingMedicalRecords).build();
             } else {
                 LOGGER.info("No medical records found with the given search criteria");
-                return Response.status(Response.Status.NOT_FOUND)
-                        .entity("No medical records found with the given search criteria")
-                        .build();
+                throw new ResourceNotFoundException("No medical records found with the given search criteria");
             }
         } catch (BadRequestException e) {
             LOGGER.info("An error occured when retrieving medical records: " + e.getMessage());
@@ -132,17 +133,18 @@ public class MedicalRecordResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addMedicalRecord(MedicalRecord medicalRecord) {
-        if(medicalRecord == null) {
+        if (medicalRecord == null) {
             throw new BadRequestException("Medical Record cannot be null");
         }
         LOGGER.info("Adding a new medical record");
-        int newMedicalRecordId = medicalRecordDAO.addMedicalRecord(medicalRecord);
         
         // Validate the medical record object
         String validationError = ValidationHelper.validate(medicalRecord);
         if (validationError != null) {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
+        
+        int newMedicalRecordId = medicalRecordDAO.addMedicalRecord(medicalRecord);
 
         return Response.status(Response.Status.CREATED).entity("New medical record with ID: " + newMedicalRecordId + " was added successfully").build();
     }
@@ -159,19 +161,19 @@ public class MedicalRecordResource {
     @Path("/{medicalRecordId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateMedicalRecord(@PathParam("medicalRecordId") int medicalRecordId, MedicalRecord updatedMedicalRecord) {
-        if(updatedMedicalRecord == null) {
-           throw new BadRequestException("Medical Record cannot be null");
+        if (updatedMedicalRecord == null) {
+            throw new BadRequestException("Medical Record cannot be null");
         }
         
+        if (medicalRecordId != updatedMedicalRecord.getMedicalRecordId()) { // IDs are immutable when updating
+            LOGGER.info("URL parameter medical record ID and the passed medical record ID do not match");
+            throw new ModelIdMismatchException("IDs are immutable. The passed medical record IDs do not match");
+        }
+
         // Validate the medical record object
         String validationError = ValidationHelper.validate(updatedMedicalRecord);
         if (validationError != null) {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
-        }
-
-        if (medicalRecordId != updatedMedicalRecord.getMedicalRecordId()) { // IDs are immutable when updating
-            LOGGER.info("URL parameter medical record ID and the passed medical record ID do not match");
-            return Response.status(Response.Status.CONFLICT).entity("IDs are immutable. The passed medical record IDs do not match").build();
         }
 
         LOGGER.info("Updating medical record with ID: " + medicalRecordId);

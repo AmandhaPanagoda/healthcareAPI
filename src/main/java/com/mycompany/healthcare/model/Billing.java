@@ -5,16 +5,32 @@
 package com.mycompany.healthcare.model;
 
 import java.util.List;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 
 /**
+ * Represents a billing record. Contains information
+ * such as bill ID, date, time, patient details, services provided, invoiced
+ * amount, payment, and outstanding balance.
  *
  * @author Amandha
  */
 public class Billing {
+
     private int billId;
+
+    @NotEmpty(message = "Date is required")
+    @Pattern(regexp = "\\d{2}-\\d{2}-\\d{4}", message = "Date must be in the format dd-mm-yyyy")
     private String billDate;
+
+    @NotEmpty(message = "Time is required")
+    @Pattern(regexp = "\\d{2}:\\d{2}:\\d{2}", message = "Time must be in the format hh:mm:ss")
     private String billTime;
+
+    @NotNull(message = "Patient is required")
     private Patient patient;
+
     private List<String> services;
     private double invoicedAmount;
     private double payment;
@@ -23,7 +39,7 @@ public class Billing {
     public Billing() {
     }
 
-    public Billing(int billId, String billDate,String billTime, Patient patient, List<String> services, double invoicedAmount, double payment, double outstandingBalance) {
+    public Billing(int billId, String billDate, String billTime, Patient patient, List<String> services, double invoicedAmount, double payment, double outstandingBalance) {
         this.billId = billId;
         this.billDate = billDate;
         this.billTime = billTime;
@@ -97,7 +113,5 @@ public class Billing {
     public void setOutstandingBalance(double outstandingBalance) {
         this.outstandingBalance = outstandingBalance;
     }
-    
-    
-    
+
 }

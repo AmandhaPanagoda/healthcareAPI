@@ -25,8 +25,11 @@ public class SecurityFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
-        boolean uri = requestContext.getUriInfo().getPath().contains("/");
-        if (uri) {
+        boolean medicalRecords = requestContext.getUriInfo().getPath().contains("medical-records");
+        boolean bills = requestContext.getUriInfo().getPath().contains("bills");
+        boolean prescriptions = requestContext.getUriInfo().getPath().contains("prescriptions");
+        
+        if (medicalRecords || bills || prescriptions) {
             List<String> authHeader = requestContext.getHeaders().get(AUTHORIZATION_HEADER_KEY);
             if (authHeader != null && !authHeader.isEmpty()) {
                 String authToken = authHeader.get(0);

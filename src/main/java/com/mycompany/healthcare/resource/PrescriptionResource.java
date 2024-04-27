@@ -5,6 +5,7 @@
 package com.mycompany.healthcare.resource;
 
 import com.mycompany.healthcare.dao.PrescriptionDAO;
+import com.mycompany.healthcare.exception.ModelIdMismatchException;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
 import javax.ws.rs.Consumes;
@@ -19,6 +20,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import com.mycompany.healthcare.model.Prescription;
 import java.util.Collection;
+import java.util.List;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.QueryParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,7 +109,7 @@ public class PrescriptionResource {
     public Response updatePrescription(@PathParam("prescriptionId") int prescriptionId, Prescription updatedPrescription) {
         if (prescriptionId != updatedPrescription.getPrescriptionId()) {
             LOGGER.info("URL parameter prescription ID and the passed prescription ID do not match");
-            return Response.status(Response.Status.CONFLICT).entity("The passed prescription IDs do not match").build();
+            throw new ModelIdMismatchException("The passed prescription IDs do not match");
         }
         LOGGER.info("Updating prescription with ID: " + prescriptionId);
         Prescription existingPrescription = prescriptionDAO.getPrescriptionById(prescriptionId);
@@ -136,6 +140,65 @@ public class PrescriptionResource {
             return Response.status(Response.Status.OK).entity("Prescription with ID " + prescriptionId + " was deleted successfully").build();
         } else {
             throw new ResourceNotFoundException("Prescription with ID " + prescriptionId + " was not found");
+        }
+    }
+
+    /**
+     * Searches for prescriptions based on the provided criteria. If no criteria
+     * are provided, returns all prescriptions.
+     *
+     * @param patientFirstName The first name of the patient to search for.
+     * @param patientLastName The last name of the patient to search for.
+     * @param doctorFirstName The first name of the doctor to search for.
+     * @param doctorLastName The last name of the doctor to search for.
+     * @param fromDate The start date of the prescription (format: dd-MM-yyyy).
+     * @param toDate The end date of the prescription (format: dd-MM-yyyy).
+     * @return A response containing a list of prescriptions matching the
+     * criteria.
+     * @throws ResourceNotFoundException If no prescriptions are found with the
+     * given criteria.
+     */
+    @GET
+    @Path("/search")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response searchPrescriptionss(
+            @QueryParam("patientFirstName") String patientFirstName,
+            @QueryParam("patientLastName") String patientLastName,
+            @QueryParam("doctorFirstName") String doctorFirstName,
+            @QueryParam("doctorLastName") String doctorLastName,
+            @QueryParam("fromDate") String fromDate,
+            @QueryParam("toDate") String toDate) {
+
+        LOGGER.info("Searching for prescriptions...");
+
+        if ((patientFirstName == null || patientFirstName.isEmpty())
+                && (patientLastName == null || patientLastName.isEmpty())
+                && (doctorFirstName == null || doctorFirstName.isEmpty())
+                && (doctorLastName == null || doctorLastName.isEmpty())
+                && (fromDate == null || fromDate.isEmpty())
+                && (toDate == null || toDate.isEmpty())) {
+            return Response.ok(getAllPrescriptions()).build();
+        }
+
+        try {
+            LOGGER.info("Searching for prescriptions in the given criteria. patientFirstName: " + patientFirstName
+                    + " patientLastName: " + patientLastName
+                    + " doctorFirstName: " + doctorFirstName
+                    + " fromDateStr: " + fromDate
+                    + " toDateStr: " + toDate);
+
+            List<Prescription> matchingPrescriptions = prescriptionDAO.searchPrescriptions(
+                    patientFirstName, patientLastName, doctorFirstName, doctorLastName, fromDate, toDate);
+            if (!matchingPrescriptions.isEmpty()) {
+                return Response.ok(matchingPrescriptions).build();
+            } else {
+                throw new ResourceNotFoundException("No prescriptions were found with the given search criteria");
+            }
+        } catch (BadRequestException e) {
+            LOGGER.error("An error occured when processing the request. Message: " + e.getMessage());
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("An error occured when processing the request. Error: " + e.getMessage())
+                    .build();
         }
     }
 }

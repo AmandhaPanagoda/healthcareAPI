@@ -8,8 +8,6 @@ package com.mycompany.healthcare.exception;
  *
  * @author Amandha
  */
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAllowedException;
@@ -44,15 +42,6 @@ public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
                     .build();
         } else if (exception instanceof BadRequestException) {
             LOGGER.warn("Bad request: " + exception.getMessage());
-            if (exception instanceof JsonMappingException) {
-                JsonMappingException jsonException = (JsonMappingException) exception;
-                if (jsonException instanceof UnrecognizedPropertyException) {
-                    String fieldName = ((UnrecognizedPropertyException) jsonException).getPropertyName();
-                    return Response.status(Response.Status.BAD_REQUEST)
-                            .entity("Unrecognized field '" + fieldName + "' in the request. Error: " + exception.getMessage())
-                            .build();
-                }
-            }
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("Sorry, there was an error in your request. Error: " + exception.getMessage())
                     .build();
