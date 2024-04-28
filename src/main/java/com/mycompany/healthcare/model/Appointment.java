@@ -14,7 +14,7 @@ import javax.validation.constraints.Pattern;
  */
 public class Appointment {
 
-    private int appointmentId;
+    private Integer appointmentId;
 
     @NotEmpty(message = "Date is required")
     @Pattern(regexp = "\\d{2}-\\d{2}-\\d{4}", message = "Date must be in the format dd-mm-yyyy")

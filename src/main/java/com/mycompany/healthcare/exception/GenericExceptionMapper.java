@@ -45,9 +45,14 @@ public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("Sorry, there was an error in your request. Error: " + exception.getMessage())
                     .build();
+        } else if (exception instanceof NullPointerException) {
+            LOGGER.warn("Null pointer exception: " + exception.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Error when processing your request. The request body is empty or contains invalid data. Please provide valid data and try again.")
+                    .build();
         }
 
-        LOGGER.error("An unexpected error occurred: " + exception.getMessage());
+        LOGGER.error("An unexpected error occurred: " + exception.getMessage()  + " Exception: " + exception.toString());
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity("Sorry, an unexpected error occurred. Error: " + exception.getMessage())
                 .build();

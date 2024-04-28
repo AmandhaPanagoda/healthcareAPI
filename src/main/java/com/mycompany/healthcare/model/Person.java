@@ -35,7 +35,7 @@ public class Person {
 
     @NotNull(message = "Contact Number is required")
     @Digits(integer = 10, fraction = 0, message = "Phone number must be 10 digits")
-    private long contactNo;
+    private Long contactNo;
 
     @NotEmpty(message = "Address is required")
     private String address;

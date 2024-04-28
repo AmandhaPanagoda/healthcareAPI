@@ -15,7 +15,7 @@ import javax.validation.constraints.Pattern;
  */
 public class Doctor extends Person {
 
-    private int doctorId;
+    private Integer doctorId;
 
     @NotEmpty(message = "Specialization is required")
     @Pattern(regexp = "[a-zA-Z]+", message = "Specialization can only contain letters")

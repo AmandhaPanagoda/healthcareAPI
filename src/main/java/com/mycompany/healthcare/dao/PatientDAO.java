@@ -5,6 +5,7 @@
 package com.mycompany.healthcare.dao;
 
 import com.mycompany.healthcare.helper.Helper;
+import com.mycompany.healthcare.helper.ObjectPatcherHelper;
 import com.mycompany.healthcare.model.Patient;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,10 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Data Access Object (DAO) class for managing Patient objects.
- * Provides methods for retrieving, adding, updating, and deleting patient records.
- * Includes static data for initial patients.
- * 
+ * Data Access Object (DAO) class for managing Patient objects. Provides methods
+ * for retrieving, adding, updating, and deleting patient records. Includes
+ * static data for initial patients.
+ *
  * @author Amandha
  */
 public class PatientDAO {
@@ -89,6 +90,23 @@ public class PatientDAO {
     }
 
     /**
+     * Partially updates an existing patient record by applying non-null fields
+     * from the partial updated patient object.
+     *
+     * @param existingPatient The existing patient object to update.
+     * @param partialUpdatedPatient The partial updated patient object
+     * containing the new values.
+     */
+    public void partialUpdatePatient(Patient existingPatient, Patient partialUpdatedPatient) {
+        try {
+            LOGGER.info("Updating the patient record");
+            ObjectPatcherHelper.objectPatcher(existingPatient, partialUpdatedPatient);
+        } catch (IllegalAccessException e) {
+            LOGGER.error("An error occured: " + e.getMessage());
+        }
+    }
+
+    /**
      * Deletes a patient by ID.
      *
      * @param patientId The ID of the patient to delete.
@@ -98,7 +116,7 @@ public class PatientDAO {
         LOGGER.info("Deleting the patient with ID: " + patientId);
         return patients.remove(patientId) != null;
     }
-    
+
     /**
      * Searches for patients based on the specified criteria.
      *
@@ -121,7 +139,7 @@ public class PatientDAO {
             boolean matchGender = gender == null || gender.equalsIgnoreCase(patient.getGender());
 
             if (matchFirstName && matchLastName && matchAge && matchGender) {
-                matchingPatients.add(patient.getPatientId(), patient);
+                matchingPatients.add(patient);
             }
         }
         return matchingPatients;

@@ -5,6 +5,7 @@
 package com.mycompany.healthcare.dao;
 
 import com.mycompany.healthcare.helper.Helper;
+import com.mycompany.healthcare.helper.ObjectPatcherHelper;
 import com.mycompany.healthcare.model.Doctor;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -86,6 +87,23 @@ public class DoctorDAO {
             LOGGER.info("Doctor record was updated. Doctor ID : {}", updatedDoctor.getDoctorId());
         } else {
             LOGGER.info("Doctor record with ID {} was not found", updatedDoctor.getDoctorId());
+        }
+    }
+
+    /**
+     * Partially updates an existing doctor record by applying non-null fields
+     * from the partial updated doctor object.
+     *
+     * @param existingDoctor The existing doctor object to update.
+     * @param partialUpdatedDoctor The partial updated doctor object containing
+     * the new values.
+     */
+    public void partialUpdateDoctor(Doctor existingDoctor, Doctor partialUpdatedDoctor) {
+        try {
+            LOGGER.info("Updating the doctor record");
+            ObjectPatcherHelper.objectPatcher(existingDoctor, partialUpdatedDoctor);
+        } catch (IllegalAccessException e) {
+            LOGGER.error("An error occured: " + e.getMessage());
         }
     }
 

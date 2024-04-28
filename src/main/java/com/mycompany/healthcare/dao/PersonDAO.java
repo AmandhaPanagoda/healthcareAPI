@@ -5,6 +5,7 @@
 package com.mycompany.healthcare.dao;
 
 import com.mycompany.healthcare.helper.Helper;
+import com.mycompany.healthcare.helper.ObjectPatcherHelper;
 import com.mycompany.healthcare.model.Person;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -90,6 +91,24 @@ public class PersonDAO {
     }
 
     /**
+     * Partially updates a Person object with the values from another Person
+     * object. This method uses reflection to update the fields of the
+     * existingPerson object with non-null values from the partialUpdatedPerson
+     * object.
+     *
+     * @param existingPerson The existing Person object to be updated.
+     * @param partialUpdatedPerson The Person object containing partial updates.
+     */
+    public void partialUpdatePerson(Person existingPerson, Person partialUpdatedPerson) {
+        try {
+            LOGGER.info("Updating the person record");
+            ObjectPatcherHelper.objectPatcher(existingPerson, partialUpdatedPerson);
+        } catch (IllegalAccessException e) {
+            LOGGER.error("An error occured: " + e.getMessage());
+        }
+    }
+
+    /**
      * Deletes a person by ID.
      *
      * @param personId The ID of the person to delete.
@@ -127,7 +146,7 @@ public class PersonDAO {
             boolean matchGender = gender == null || gender.equalsIgnoreCase(person.getGender());
 
             if (matchFirstName && matchLastName && matchAge && matchGender) {
-                matchingPeople.add(person.getPersonId(), person);
+                matchingPeople.add(person);
             }
         }
         return matchingPeople;

@@ -8,6 +8,7 @@ import com.mycompany.healthcare.dao.AppointmentDAO;
 import com.mycompany.healthcare.dao.DoctorDAO;
 import com.mycompany.healthcare.dao.PersonDAO;
 import com.mycompany.healthcare.dao.PrescriptionDAO;
+import com.mycompany.healthcare.exception.ModelIdMismatchException;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
 import com.mycompany.healthcare.model.Appointment;
@@ -28,6 +29,7 @@ import com.mycompany.healthcare.model.Doctor;
 import com.mycompany.healthcare.model.Person;
 import com.mycompany.healthcare.model.Prescription;
 import java.util.Collection;
+import javax.ws.rs.PATCH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -149,6 +151,41 @@ public class DoctorResource {
             LOGGER.info("Doctor record was updated. Updated Doctor ID: " + doctorId);
 
             return Response.status(Response.Status.OK).entity("Doctor with ID " + doctorId + " was updated successfully").build();
+        }
+    }
+
+    /**
+     * Partially updates an existing doctor record by applying non-null fields
+     * from the partial updated doctor object.
+     *
+     * @param doctorId The ID of the doctor to update.
+     * @param partialUpdatedDoctor The partial updated doctor object containing
+     * the new values.
+     * @return A response indicating the status of the update operation.
+     */
+    @PATCH
+    @Path("/{doctorId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response partialUpdateDoctor(@PathParam("doctorId") int doctorId, Doctor partialUpdatedDoctor) {
+        if (partialUpdatedDoctor.getDoctorId() != 0 && doctorId != partialUpdatedDoctor.getDoctorId()) {
+            LOGGER.info("URL parameter doctor ID and the passed doctor ID do not match");
+            throw new ModelIdMismatchException("The passed doctor IDs do not match");
+        }
+
+        Doctor existingDoctor = doctorDAO.getDoctorById(doctorId);
+
+        if (partialUpdatedDoctor.getPersonId() != 0 && partialUpdatedDoctor.getPersonId() != existingDoctor.getPersonId()) {
+            LOGGER.info("IDs are immutable. Cannot update the person ID");
+            throw new ModelIdMismatchException("IDs are immutable. Cannot update the person ID");
+        }
+
+        if (existingDoctor != null) {
+            doctorDAO.partialUpdateDoctor(existingDoctor, partialUpdatedDoctor);
+       
+            return Response.status(Response.Status.OK).entity("Doctor with ID " + doctorId + " was updated successfully").build();
+        } else {
+            LOGGER.error("Doctor ID" + doctorId + " was not found");
+            throw new ResourceNotFoundException("Doctor with ID " + doctorId + " was not found");
         }
     }
 

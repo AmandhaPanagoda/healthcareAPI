@@ -16,7 +16,7 @@ import javax.validation.constraints.Pattern;
  */
 public class MedicalRecord {
 
-    private int medicalRecordId;
+    private Integer medicalRecordId;
 
     @NotNull(message = "Patient is required")
     private Patient patient;

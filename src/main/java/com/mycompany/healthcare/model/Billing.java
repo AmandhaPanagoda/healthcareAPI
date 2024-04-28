@@ -18,7 +18,7 @@ import javax.validation.constraints.Pattern;
  */
 public class Billing {
 
-    private int billId;
+    private Integer billId;
 
     @NotEmpty(message = "Date is required")
     @Pattern(regexp = "\\d{2}-\\d{2}-\\d{4}", message = "Date must be in the format dd-mm-yyyy")
@@ -32,9 +32,9 @@ public class Billing {
     private Patient patient;
 
     private List<String> services;
-    private double invoicedAmount;
-    private double payment;
-    private double outstandingBalance;
+    private Double invoicedAmount;
+    private Double payment;
+    private Double outstandingBalance;
 
     public Billing() {
     }

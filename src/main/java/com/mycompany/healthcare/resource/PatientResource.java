@@ -28,10 +28,12 @@ import com.mycompany.healthcare.dao.MedicalRecordDAO;
 import com.mycompany.healthcare.dao.PatientDAO;
 import com.mycompany.healthcare.dao.PersonDAO;
 import com.mycompany.healthcare.dao.PrescriptionDAO;
+import com.mycompany.healthcare.exception.ModelIdMismatchException;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
 import com.mycompany.healthcare.model.Appointment;
 import com.mycompany.healthcare.model.Billing;
+import javax.ws.rs.PATCH;
 import javax.ws.rs.QueryParam;
 
 /**
@@ -164,6 +166,40 @@ public class PatientResource {
             String message = "Patient with ID " + patientId + " was successfully updated";
 
             return Response.ok().entity(message).build(); // return a message indicating success
+        }
+    }
+
+    /**
+     * Partially updates a patient record.
+     *
+     * @param patientId The ID of the patient to update.
+     * @param partialUpdatedPatient The partially updated Patient object
+     * containing the new values.
+     * @return A Response indicating the outcome of the update operation.
+     */
+    @PATCH
+    @Path("/{patientId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response partialUpdatePatient(@PathParam("patientId") int patientId, Patient partialUpdatedPatient) {
+        if (partialUpdatedPatient.getPatientId() != 0 && patientId != partialUpdatedPatient.getPatientId()) {
+            LOGGER.info("URL parameter patient ID and the passed patient ID do not match");
+            throw new ModelIdMismatchException("The passed patient IDs do not match");
+        }
+
+        Patient existingPatient = patientDAO.getPatientById(patientId);
+
+        if (partialUpdatedPatient.getPersonId() != 0 && partialUpdatedPatient.getPersonId() != existingPatient.getPersonId()) {
+            LOGGER.info("IDs are immutable. Cannot update the person ID");
+            throw new ModelIdMismatchException("IDs are immutable. Cannot update the person ID");
+        }
+
+        if (existingPatient != null) {
+            patientDAO.partialUpdatePatient(existingPatient, partialUpdatedPatient);
+
+            return Response.status(Response.Status.OK).entity("Patient with ID " + patientId + " was updated successfully").build();
+        } else {
+            LOGGER.error("Patient ID" + patientId + " was not found");
+            throw new ResourceNotFoundException("Patient with ID " + patientId + " was not found");
         }
     }
 

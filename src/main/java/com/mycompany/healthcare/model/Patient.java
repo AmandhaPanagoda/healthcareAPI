@@ -14,7 +14,7 @@ package com.mycompany.healthcare.model;
  */
 public class Patient extends Person {
 
-    private int patientId;
+    private Integer patientId;
     private String healthStatus;
     private String medicalHistory;
 
