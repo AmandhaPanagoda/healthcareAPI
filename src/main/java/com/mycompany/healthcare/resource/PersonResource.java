@@ -42,13 +42,12 @@ public class PersonResource {
     /**
      * Retrieves all people records.
      *
-     * @param sortMethod
      * @return A collection of Person objects.
      * @throws ResourceNotFoundException If no records are found.
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Collection<Person> getAllPeople(@QueryParam("sort") String sortMethod) {
+    public Collection<Person> getAllPeople() {
         LOGGER.info("Fetching all person records");
         if (!personDAO.getAllPeople().isEmpty()) {
             return personDAO.getAllPeople().values();
@@ -222,7 +221,7 @@ public class PersonResource {
                 && (maxAge == null)
                 && (gender == null || gender.isEmpty())) {
             return Response.status(Response.Status.OK)
-                    .entity(getAllPeople(null))
+                    .entity(getAllPeople())
                     .build();
         }
 
