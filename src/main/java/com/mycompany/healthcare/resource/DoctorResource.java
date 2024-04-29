@@ -139,11 +139,6 @@ public class DoctorResource {
             LOGGER.error("Doctor ID" + doctorId + " was not found");
             throw new ResourceNotFoundException("Error in updating! Doctor with ID " + doctorId + " was not found");
 
-        } else if (existingDoctor.getPersonId() != updatedDoctor.getPersonId()) {
-            String message = "Person ID of the doctor cannot be updated. Existing Person ID: " + existingDoctor.getPersonId() + ". Passed Person ID: " + updatedDoctor.getPersonId();
-            LOGGER.info(message);
-
-            return Response.status(Response.Status.CONFLICT).entity(message).build();
         } else {
             String validationError = ValidationHelper.validate(updatedDoctor);
             if (validationError != null) {
@@ -151,7 +146,11 @@ public class DoctorResource {
             }
 
             doctorDAO.updateDoctor(updatedDoctor); // update the doctor record
-            personDAO.updatePerson(updatedDoctor); // update the prson record
+            
+            Person person = createPerson(updatedDoctor);
+            person.setPersonId(updatedDoctor.getPersonId());
+            personDAO.updatePerson(person); // update the person record
+            
             LOGGER.info("Doctor record was updated. Updated Doctor ID: " + doctorId);
 
             return Response.status(Response.Status.OK).entity("Doctor with ID " + doctorId + " was updated successfully").build();
@@ -177,15 +176,11 @@ public class DoctorResource {
         }
 
         Doctor existingDoctor = doctorDAO.getDoctorById(doctorId);
-
-        if (partialUpdatedDoctor.getPersonId() != 0 && partialUpdatedDoctor.getPersonId() != existingDoctor.getPersonId()) {
-            LOGGER.info("IDs are immutable. Cannot update the person ID");
-            throw new ModelIdMismatchException("IDs are immutable. Cannot update the person ID");
-        }
-
+        Person existingPerson = personDAO.getPersonById(doctorId);
         if (existingDoctor != null) {
             doctorDAO.partialUpdateDoctor(existingDoctor, partialUpdatedDoctor);
-
+            personDAO.partialUpdatePerson(existingPerson, partialUpdatedDoctor);
+            
             return Response.status(Response.Status.OK).entity("Doctor with ID " + doctorId + " was updated successfully").build();
         } else {
             LOGGER.error("Doctor ID" + doctorId + " was not found");
