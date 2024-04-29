@@ -35,9 +35,6 @@ public class Helper<T> {
     }
 
     public <K> int getNextId(Map<K, ?> map) {
-        if (map.isEmpty()) {
-            return 1; // If the map is empty, return 1 as the next ID
-        }
 
         if (!(map.keySet().iterator().next() instanceof Integer)) {
             throw new IllegalArgumentException("Key type must be Integer");

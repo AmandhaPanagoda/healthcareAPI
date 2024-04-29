@@ -33,7 +33,7 @@ public class PrescriptionDAO {
 
     static {
         Patient patient = new Patient(1, 3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
-        Doctor doctor = new Doctor(2, "Neurologist", 2, "Abigail", "Henderson", 1124579548, "2075 Elliott Street, NH", "F", 33);
+        Doctor doctor = new Doctor("Neurologist", 2, "Abigail", "Henderson", 1124579548, "2075 Elliott Street, NH", "F", 33);
 
         prescriptions.put(1, new Prescription(1, patient, doctor, "01-04-2024", "Medication 1", "Take with food", "1 pill", "1 week"));
         prescriptions.put(2, new Prescription(2, patient, doctor, "05-04-2024", "Medication 2", "Take before bedtime", "2 pills", "2 weeks"));
@@ -93,7 +93,7 @@ public class PrescriptionDAO {
         List<Prescription> matchingPrescriptions = new ArrayList<>();
 
         for (Prescription prescription : prescriptions.values()) {
-            int prescriptionDoctorID = prescription.getPrescribedBy().getDoctorId();
+            int prescriptionDoctorID = prescription.getPrescribedBy().getPersonId();
             if (doctorId == prescriptionDoctorID) {
                 matchingPrescriptions.add(prescription);
             }

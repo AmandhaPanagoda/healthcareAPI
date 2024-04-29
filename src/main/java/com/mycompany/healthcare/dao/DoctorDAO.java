@@ -7,6 +7,7 @@ package com.mycompany.healthcare.dao;
 import com.mycompany.healthcare.helper.Helper;
 import com.mycompany.healthcare.helper.ObjectPatcherHelper;
 import com.mycompany.healthcare.model.Doctor;
+import com.mycompany.healthcare.dao.PersonDAO;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,12 +24,13 @@ import org.slf4j.LoggerFactory;
 public class DoctorDAO {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DoctorDAO.class);
+    private static PersonDAO personDAO = new PersonDAO();
     private static final Map<Integer, Doctor> doctors = new HashMap<>();
 
     // Static block to initialize some sample doctor records
     static {
-        doctors.put(1, new Doctor(1, "Cardiologist", 1, "Eric", "Anderson", 1234548548, "684 Delaware Avenue, SF", "M", 45));
-        doctors.put(2, new Doctor(2, "Neurologist", 2, "Abigail", "Henderson", 1124579548, "2075 Elliott Street, NH", "F", 33));
+        doctors.put(1, new Doctor("Cardiologist", 1, "Eric", "Anderson", 1234548548, "684 Delaware Avenue, SF", "M", 45));
+        doctors.put(2, new Doctor("Neurologist", 2, "Abigail", "Henderson", 1124579548, "2075 Elliott Street, NH", "F", 33));
     }
 
     /**
@@ -60,18 +62,10 @@ public class DoctorDAO {
      * Adds a new doctor to the database.
      *
      * @param doctor The doctor object to add.
-     * @return The ID assigned to the new doctor.
      */
-    public int addDoctor(Doctor doctor) {
+    public void addDoctor(Doctor doctor) {
         LOGGER.info("Adding a new doctor");
-
-        Helper<Doctor> helper = new Helper<>();
-        int newDoctorId = helper.getNextId(doctors); //get the next available doctor ID
-
-        doctor.setDoctorId(newDoctorId); //set the new doctor ID
-        doctors.put(newDoctorId, doctor);
-
-        return newDoctorId;
+        doctors.put(doctor.getPersonId(), doctor);
     }
 
     /**
@@ -81,12 +75,12 @@ public class DoctorDAO {
      */
     public void updateDoctor(Doctor updatedDoctor) {
         LOGGER.info("Updating doctor record");
-        Doctor existingDoctor = doctors.get(updatedDoctor.getDoctorId());
+        Doctor existingDoctor = doctors.get(updatedDoctor.getPersonId());
         if (existingDoctor != null) {
-            doctors.put(updatedDoctor.getDoctorId(), updatedDoctor);
-            LOGGER.info("Doctor record was updated. Doctor ID : {}", updatedDoctor.getDoctorId());
+            doctors.put(updatedDoctor.getPersonId(), updatedDoctor);
+            LOGGER.info("Doctor record was updated.ID : {}", updatedDoctor.getPersonId());
         } else {
-            LOGGER.info("Doctor record with ID {} was not found", updatedDoctor.getDoctorId());
+            LOGGER.info("Doctor record with ID {} was not found", updatedDoctor.getPersonId());
         }
     }
 

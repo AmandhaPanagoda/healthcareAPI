@@ -15,8 +15,6 @@ import javax.validation.constraints.Pattern;
  */
 public class Doctor extends Person {
 
-    private Integer doctorId;
-
     @NotEmpty(message = "Specialization is required")
     @Pattern(regexp = "[a-zA-Z]+", message = "Specialization can only contain letters")
     private String specialization;
@@ -24,18 +22,9 @@ public class Doctor extends Person {
     public Doctor() {
     }
 
-    public Doctor(int doctorId, String specialization, int personId, String firstName, String lastName, long contactNo, String address, String gender, int age) {
+    public Doctor(String specialization, int personId, String firstName, String lastName, long contactNo, String address, String gender, int age) {
         super(personId, firstName, lastName, contactNo, address, gender, age);
-        this.doctorId = doctorId;
         this.specialization = specialization;
-    }
-
-    public int getDoctorId() {
-        return doctorId;
-    }
-
-    public void setDoctorId(int doctorId) {
-        this.doctorId = doctorId;
     }
 
     public String getSpecialization() {

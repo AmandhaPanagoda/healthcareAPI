@@ -30,6 +30,7 @@ import com.mycompany.healthcare.model.Person;
 import com.mycompany.healthcare.model.Prescription;
 import java.util.Collection;
 import javax.ws.rs.PATCH;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,8 +107,11 @@ public class DoctorResource {
         if (validationError != null) {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
-        int newDoctorId = doctorDAO.addDoctor(doctor); // add the new doctor and get the new doctor id
-        personDAO.addPerson(doctor); // add the doctor to the person list
+
+        Person person = createPerson(doctor);
+        int newDoctorId = personDAO.addPerson(person); // add the doctor to the person list
+        doctor.setPersonId(newDoctorId);
+        doctorDAO.addDoctor(doctor); // add the new doctor and get the new doctor id
 
         return Response.status(Response.Status.CREATED).entity("New doctor with ID: " + newDoctorId + " was added successfully").build();
     }
@@ -123,7 +127,7 @@ public class DoctorResource {
     @Path("/{doctorId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateDoctor(@PathParam("doctorId") int doctorId, Doctor updatedDoctor) {
-        if (doctorId != updatedDoctor.getDoctorId()) {
+        if (doctorId != updatedDoctor.getPersonId()) {
             LOGGER.info("URL parameter doctor ID and the passed doctor ID do not match");
             return Response.status(Response.Status.CONFLICT).entity("The passed doctor IDs do not match").build();
         }
@@ -167,7 +171,7 @@ public class DoctorResource {
     @Path("/{doctorId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response partialUpdateDoctor(@PathParam("doctorId") int doctorId, Doctor partialUpdatedDoctor) {
-        if (partialUpdatedDoctor.getDoctorId() != 0 && doctorId != partialUpdatedDoctor.getDoctorId()) {
+        if (partialUpdatedDoctor.getPersonId() != 0 && doctorId != partialUpdatedDoctor.getPersonId()) {
             LOGGER.info("URL parameter doctor ID and the passed doctor ID do not match");
             throw new ModelIdMismatchException("The passed doctor IDs do not match");
         }
@@ -181,7 +185,7 @@ public class DoctorResource {
 
         if (existingDoctor != null) {
             doctorDAO.partialUpdateDoctor(existingDoctor, partialUpdatedDoctor);
-       
+
             return Response.status(Response.Status.OK).entity("Doctor with ID " + doctorId + " was updated successfully").build();
         } else {
             LOGGER.error("Doctor ID" + doctorId + " was not found");
@@ -296,6 +300,18 @@ public class DoctorResource {
         } else {
             throw new ResourceNotFoundException("Doctor with ID " + doctorId + " has not created any prescriptions");
         }
+    }
+
+    private Person createPerson(Doctor doctor) {
+        Person person = new Person();
+        person.setFirstName(doctor.getFirstName());
+        person.setLastName(doctor.getLastName());
+        person.setAddress(doctor.getAddress());
+        person.setAge(doctor.getAge());
+        person.setContactNo(doctor.getContactNo());
+        person.setGender(doctor.getGender());
+        
+        return person;
     }
 
 }
