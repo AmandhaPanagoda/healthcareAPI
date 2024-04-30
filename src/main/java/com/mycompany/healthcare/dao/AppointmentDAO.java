@@ -32,22 +32,22 @@ public class AppointmentDAO {
 
     static {
         Doctor doctor1 = new Doctor("Cardiologist", 1, "Eric", "Anderson", 1234548548, "684 Delaware Avenue, SF", "M", 45);
-        Patient patient1 = new Patient(1, 3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
+        Patient patient1 = new Patient(3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
 
         appointments.put(1, new Appointment(1, "12-13-2024", "16:00:00", patient1, doctor1));
 
         Doctor doctor2 = new Doctor("Neurologist", 2, "Abigail", "Henderson", 1124579548, "2075 Elliott Street, NH", "F", 33);
-        Patient patient2 = new Patient(2, 4, "Alice", "Smith", 1234567890, "123 Main St, Anytown, USA", "F", 25, "Healthy", "No significant medical history");
+        Patient patient2 = new Patient(4, "Alice", "Smith", 1234567890, "123 Main St, Anytown, USA", "F", 25, "Healthy", "No significant medical history");
 
         appointments.put(2, new Appointment(2, "12-14-2024", "10:00:00", patient2, doctor2));
 
         Doctor doctor3 = new Doctor("Pediatrician", 3, "Michael", "Brown", 1876543210, "456 Elm St, Othertown, USA", "M", 40);
-        Patient patient3 = new Patient(3, 5, "Bob", "Johnson", 1876543210, "456 Elm St, Othertown, USA", "M", 35, "Diagnosed with diabetes", "Regularly monitored for blood sugar levels");
+        Patient patient3 = new Patient(5, "Bob", "Johnson", 1876543210, "456 Elm St, Othertown, USA", "M", 35, "Diagnosed with diabetes", "Regularly monitored for blood sugar levels");
 
         appointments.put(3, new Appointment(3, "12-15-2024", "14:30:00", patient3, doctor3));
 
         Doctor doctor4 = new Doctor("Dermatologist", 4, "Emily", "Clark", 1876543210, "789 Oak St, Anotherplace, USA", "F", 35);
-        Patient patient4 = new Patient(4, 6, "Charlie", "Brown", 1551234567, "789 Oak St, Anotherplace, USA", "M", 45, "Recovering from surgery", "Underwent appendectomy last month");
+        Patient patient4 = new Patient(6, "Charlie", "Brown", 1551234567, "789 Oak St, Anotherplace, USA", "M", 45, "Recovering from surgery", "Underwent appendectomy last month");
 
         appointments.put(4, new Appointment(4, "12-16-2024", "11:45:00", patient4, doctor4));
     }
@@ -84,7 +84,7 @@ public class AppointmentDAO {
         List<Appointment> matchingAppointments = new ArrayList<>();
 
         for (Appointment appointment : appointments.values()) {
-            int appointmentPatientID = appointment.getPatient().getPatientId();
+            int appointmentPatientID = appointment.getPatient().getPersonId();
             if (patientId == appointmentPatientID) {
                 matchingAppointments.add(appointment);
             }

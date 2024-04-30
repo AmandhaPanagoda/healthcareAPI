@@ -27,10 +27,10 @@ public class MedicalRecordDAO {
 
     static {
         // Initialize some sample data
-        Patient patient1 = new Patient(1, 3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
-        Patient patient2 = new Patient(2, 4, "Alice", "Smith", 1234567890, "123 Main St, Anytown, USA", "F", 25, "Healthy", "No significant medical history");
-        Patient patient3 = new Patient(3, 5, "Bob", "Johnson", 1876543210, "456 Elm St, Othertown, USA", "M", 35, "Diagnosed with diabetes", "Regularly monitored for blood sugar levels");
-        Patient patient4 = new Patient(4, 6, "Charlie", "Brown", 1551234567, "789 Oak St, Anotherplace, USA", "M", 45, "Recovering from surgery", "Underwent appendectomy last month");
+        Patient patient1 = new Patient(3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
+        Patient patient2 = new Patient(4, "Alice", "Smith", 1234567890, "123 Main St, Anytown, USA", "F", 25, "Healthy", "No significant medical history");
+        Patient patient3 = new Patient(5, "Bob", "Johnson", 1876543210, "456 Elm St, Othertown, USA", "M", 35, "Diagnosed with diabetes", "Regularly monitored for blood sugar levels");
+        Patient patient4 = new Patient(6, "Charlie", "Brown", 1551234567, "789 Oak St, Anotherplace, USA", "M", 45, "Recovering from surgery", "Underwent appendectomy last month");
 
         medicalRecords.put(1, new MedicalRecord(1, patient1, "Penicillin and related antibiotics", "ADHD", "Every two week checkup and psychological counseling", "O+"));
         medicalRecords.put(2, new MedicalRecord(2, patient2, "Ibuprofen", "None", "Annual checkup", "AB-"));
@@ -68,7 +68,7 @@ public class MedicalRecordDAO {
     public MedicalRecord getMedicalRecordByPatientId(int patientId) {
         LOGGER.info("Retrieving medical record by Patient ID " + patientId);
         for (MedicalRecord medicalRecord : medicalRecords.values()) {
-            if (medicalRecord.getPatient().getPatientId() == patientId) {
+            if (medicalRecord.getPatient().getPersonId() == patientId) {
                 return medicalRecord;
             }
         }

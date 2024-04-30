@@ -5,6 +5,7 @@
 package com.mycompany.healthcare.resource;
 
 import com.mycompany.healthcare.dao.MedicalRecordDAO;
+import com.mycompany.healthcare.dao.PatientDAO;
 import com.mycompany.healthcare.exception.ModelIdMismatchException;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
@@ -19,6 +20,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import com.mycompany.healthcare.model.MedicalRecord;
+import com.mycompany.healthcare.model.Patient;
 import java.util.Collection;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -27,9 +29,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * RESTful resource class for managing medical records 
- * Provides endpoints for CRUD operations and searching medical records based on various criteria.
- * 
+ * RESTful resource class for managing medical records Provides endpoints for
+ * CRUD operations and searching medical records based on various criteria.
+ *
  * @author Amandha
  */
 @Path("/medical-records")
@@ -37,6 +39,7 @@ public class MedicalRecordResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MedicalRecordResource.class);
     private final MedicalRecordDAO medicalRecordDAO = new MedicalRecordDAO();
+    private final PatientDAO patientDAO = new PatientDAO();
 
     /**
      * Retrieves all medical records.
@@ -137,13 +140,21 @@ public class MedicalRecordResource {
             throw new BadRequestException("Medical Record cannot be null");
         }
         LOGGER.info("Adding a new medical record");
-        
+
         // Validate the medical record object
         String validationError = ValidationHelper.validate(medicalRecord);
         if (validationError != null) {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
-        
+
+        int patientId = medicalRecord.getPatient().getPersonId();
+        Patient patient = patientDAO.getPatientById(patientId);
+
+        if (patient == null) {
+            throw new ResourceNotFoundException("Patient does not exist");
+        }
+        medicalRecord.setPatient(patient);
+
         int newMedicalRecordId = medicalRecordDAO.addMedicalRecord(medicalRecord);
 
         return Response.status(Response.Status.CREATED).entity("New medical record with ID: " + newMedicalRecordId + " was added successfully").build();
@@ -164,7 +175,7 @@ public class MedicalRecordResource {
         if (updatedMedicalRecord == null) {
             throw new BadRequestException("Medical Record cannot be null");
         }
-        
+
         if (medicalRecordId != updatedMedicalRecord.getMedicalRecordId()) { // IDs are immutable when updating
             LOGGER.info("URL parameter medical record ID and the passed medical record ID do not match");
             throw new ModelIdMismatchException("IDs are immutable. The passed medical record IDs do not match");
@@ -180,7 +191,15 @@ public class MedicalRecordResource {
         MedicalRecord existingMedicalRecord = medicalRecordDAO.getMedicalRecordById(medicalRecordId);
 
         if (existingMedicalRecord != null) { //check if the medical record exists
+            int patientId = updatedMedicalRecord.getPatient().getPersonId();
+            Patient patient = patientDAO.getPatientById(patientId);
+
+            if (patient == null) {
+                throw new ResourceNotFoundException("Patient does not exist");
+            }
+            updatedMedicalRecord.setPatient(patient);
             medicalRecordDAO.updateMedicalRecord(updatedMedicalRecord); // update the existing medical record
+
             LOGGER.info("Medical record was updated. Updated Medical Record ID: " + medicalRecordId);
             return Response.status(Response.Status.OK).entity("Medical Record with ID " + medicalRecordId + " was updated successfully").build();
         } else {

@@ -10,7 +10,6 @@ import com.mycompany.healthcare.model.Doctor;
 import com.mycompany.healthcare.model.Patient;
 import com.mycompany.healthcare.model.Prescription;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -32,7 +31,7 @@ public class PrescriptionDAO {
     private static final Map<Integer, Prescription> prescriptions = new HashMap<>();
 
     static {
-        Patient patient = new Patient(1, 3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
+        Patient patient = new Patient(3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
         Doctor doctor = new Doctor("Neurologist", 2, "Abigail", "Henderson", 1124579548, "2075 Elliott Street, NH", "F", 33);
 
         prescriptions.put(1, new Prescription(1, patient, doctor, "01-04-2024", "Medication 1", "Take with food", "1 pill", "1 week"));
@@ -73,7 +72,7 @@ public class PrescriptionDAO {
         List<Prescription> matchingPrescriptions = new ArrayList<>();
 
         for (Prescription prescription : prescriptions.values()) {
-            int prescriptionPatientID = prescription.getPrescribedFor().getPatientId();
+            int prescriptionPatientID = prescription.getPrescribedFor().getPersonId();
             if (patientId == prescriptionPatientID) {
                 matchingPrescriptions.add(prescription);
             }

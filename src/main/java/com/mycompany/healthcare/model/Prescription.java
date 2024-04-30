@@ -20,10 +20,10 @@ public class Prescription {
 
     private Integer prescriptionId;
 
-    @NotNull(message = "Patient is required")
+    @NotNull(message = "Patient ID is required")
     private Patient prescribedFor;
 
-    @NotNull(message = "Doctor is required")
+    @NotNull(message = "Doctor ID is required")
     private Doctor prescribedBy;
 
     @NotEmpty(message = "Date is required")

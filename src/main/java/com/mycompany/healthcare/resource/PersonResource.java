@@ -4,6 +4,8 @@
  */
 package com.mycompany.healthcare.resource;
 
+import com.mycompany.healthcare.dao.DoctorDAO;
+import com.mycompany.healthcare.dao.PatientDAO;
 import java.util.List;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
@@ -38,6 +40,8 @@ public class PersonResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PersonResource.class);
     private final PersonDAO personDAO = new PersonDAO();
+    private final PatientDAO patientDAO = new PatientDAO();
+    private final DoctorDAO doctorDAO = new DoctorDAO();
 
     /**
      * Retrieves all people records.
@@ -181,7 +185,10 @@ public class PersonResource {
     @DELETE
     @Path("/{personId}")
     public Response deletePerson(@PathParam("personId") int personId) {
+        patientDAO.deletePatient(personId);
+        doctorDAO.deleteDoctor(personId);
         boolean removed = personDAO.deletePerson(personId);
+        
         if (removed) {
             return Response.status(Response.Status.OK).entity("Person with ID " + personId + " was deleted successfully").build();
         } else {

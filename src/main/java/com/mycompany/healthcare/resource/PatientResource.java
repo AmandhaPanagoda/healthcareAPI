@@ -33,6 +33,7 @@ import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
 import com.mycompany.healthcare.model.Appointment;
 import com.mycompany.healthcare.model.Billing;
+import com.mycompany.healthcare.model.Person;
 import javax.ws.rs.PATCH;
 import javax.ws.rs.QueryParam;
 
@@ -112,9 +113,11 @@ public class PatientResource {
         if (validationError != null) {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
-
-        int newPatientId = patientDAO.addPatient(patient); // add the new patient to the patients list and get new patient id
-        personDAO.addPerson(patient); // add the new patient to person record
+        
+        Person person = createPerson(patient);
+        int newPatientId = personDAO.addPerson(person); // add the new patient to person record
+        patient.setPersonId(newPatientId);
+        patientDAO.addPatient(patient); // add the new patient to the patients list and get new patient id
 
         return Response.status(Response.Status.CREATED).entity("New patient with ID: " + newPatientId + " was added successfully").build();
     }
@@ -143,9 +146,9 @@ public class PatientResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
 
-        if (patientId != updatedPatient.getPatientId()) { // IDs are immutable when updating
-            LOGGER.info("URL parameter patient ID and the passed patient ID do not match");
-            return Response.status(Response.Status.CONFLICT).entity("IDs are immutable. The passed patient IDs do not match").build();
+        if (patientId != updatedPatient.getPersonId()) { // IDs are immutable when updating
+            LOGGER.info("URL parameter ID and the passed ID do not match");
+            throw new ModelIdMismatchException("IDs are immutable. The passed patient IDs do not match");
         }
 
         Patient existingPatient = patientDAO.getPatientById(patientId);
@@ -153,12 +156,6 @@ public class PatientResource {
         if (existingPatient == null) {
             LOGGER.error("Patient ID" + patientId + " was not found");
             throw new ResourceNotFoundException("Error in updating! Patient with ID " + patientId + " was not found");
-
-        } else if (existingPatient.getPersonId() != updatedPatient.getPersonId()) {
-            String message = "Person ID of the patient cannot be updated. Existing Person ID: " + existingPatient.getPersonId() + ". Passed Person ID: " + updatedPatient.getPersonId();
-            LOGGER.info(message);
-
-            return Response.status(Response.Status.CONFLICT).entity(message).build();
 
         } else {
             patientDAO.updatePatient(updatedPatient); // update the patient record
@@ -181,9 +178,9 @@ public class PatientResource {
     @Path("/{patientId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response partialUpdatePatient(@PathParam("patientId") int patientId, Patient partialUpdatedPatient) {
-        if (partialUpdatedPatient.getPatientId() != 0 && patientId != partialUpdatedPatient.getPatientId()) {
-            LOGGER.info("URL parameter patient ID and the passed patient ID do not match");
-            throw new ModelIdMismatchException("The passed patient IDs do not match");
+        if (partialUpdatedPatient.getPersonId() != 0 && patientId != partialUpdatedPatient.getPersonId()) {
+            LOGGER.info("URL parameter ID and the passed ID do not match");
+            throw new ModelIdMismatchException("The passed IDs do not match");
         }
 
         Patient existingPatient = patientDAO.getPatientById(patientId);
@@ -437,5 +434,17 @@ public class PatientResource {
         } else {
             throw new ResourceNotFoundException("Patient with ID " + patientId + " was not found");
         }
+    }
+    
+    private Person createPerson(Patient patient) {
+        Person person = new Person();
+        person.setFirstName(patient.getFirstName());
+        person.setLastName(patient.getLastName());
+        person.setAddress(patient.getAddress());
+        person.setAge(patient.getAge());
+        person.setContactNo(patient.getContactNo());
+        person.setGender(patient.getGender());
+        
+        return person;
     }
 }

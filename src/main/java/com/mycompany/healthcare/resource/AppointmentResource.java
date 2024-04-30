@@ -5,10 +5,14 @@
 package com.mycompany.healthcare.resource;
 
 import com.mycompany.healthcare.dao.AppointmentDAO;
+import com.mycompany.healthcare.dao.DoctorDAO;
+import com.mycompany.healthcare.dao.PatientDAO;
 import com.mycompany.healthcare.exception.ModelIdMismatchException;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
 import com.mycompany.healthcare.model.Appointment;
+import com.mycompany.healthcare.model.Doctor;
+import com.mycompany.healthcare.model.Patient;
 import java.util.List;
 import java.util.Collection;
 import org.slf4j.Logger;
@@ -28,7 +32,7 @@ import javax.ws.rs.core.Response;
 
 /**
  * Resource class for managing appointments.
- * 
+ *
  * @author Amandha
  */
 @Path("/appointments")
@@ -36,6 +40,8 @@ public class AppointmentResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AppointmentResource.class);
     private final AppointmentDAO appointmentDAO = new AppointmentDAO();
+    private final PatientDAO patientDAO = new PatientDAO();
+    private final DoctorDAO doctorDAO = new DoctorDAO();
 
     /**
      * Retrieves all appointments.
@@ -94,6 +100,19 @@ public class AppointmentResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
 
+        int patientId = appointment.getPatient().getPersonId();
+        int doctorId = appointment.getDoctor().getPersonId();
+        Patient patient = patientDAO.getPatientById(patientId);
+        Doctor doctor = doctorDAO.getDoctorById(doctorId);
+
+        if (doctor == null) {
+            throw new ResourceNotFoundException("Doctor does not exist");
+        } else if (patient == null) {
+            throw new ResourceNotFoundException("Patient does not exist");
+        }
+        appointment.setDoctor(doctor);
+        appointment.setPatient(patient);
+
         int newAppointmentId = appointmentDAO.addAppointment(appointment);
         return Response.status(Response.Status.CREATED).entity("New appointment with ID: " + newAppointmentId + " was added successfully").build();
     }
@@ -109,22 +128,33 @@ public class AppointmentResource {
     @Path("/{appointmentId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateAppointment(@PathParam("appointmentId") int appointmentId, Appointment updatedAppointment) {
-
+        if (appointmentId != updatedAppointment.getAppointmentId()) { // IDs are immutable when updating
+            LOGGER.info("URL parameter appointment ID and the passed appointment ID do not match");
+            throw new ModelIdMismatchException("IDs are immutable. The passed appointment IDs do not match");
+        }
         // Validate the appointment object
         String validationError = ValidationHelper.validate(updatedAppointment);
         if (validationError != null) {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
 
-        if (appointmentId != updatedAppointment.getAppointmentId()) { // IDs are immutable when updating
-            LOGGER.info("URL parameter appointment ID and the passed appointment ID do not match");
-            throw new ModelIdMismatchException("IDs are immutable. The passed appointment IDs do not match");
-        }
-
         LOGGER.info("Updating appointment with ID: " + appointmentId);
         Appointment existingAppointment = appointmentDAO.getAppointmentById(appointmentId);
 
         if (existingAppointment != null) { //check if an appointment exists
+            int patientId = updatedAppointment.getPatient().getPersonId();
+            int doctorId = updatedAppointment.getDoctor().getPersonId();
+            Patient patient = patientDAO.getPatientById(patientId);
+            Doctor doctor = doctorDAO.getDoctorById(doctorId);
+
+            if (doctor == null) {
+                throw new ResourceNotFoundException("Doctor does not exist");
+            } else if (patient == null) {
+                throw new ResourceNotFoundException("Patient does not exist");
+            }
+            updatedAppointment.setDoctor(doctor);
+            updatedAppointment.setPatient(patient);
+
             appointmentDAO.updateAppointment(updatedAppointment); // update the existing appointment
             LOGGER.info("Appointment record was updated. Updated Appointment ID: " + appointmentId);
             return Response.status(Response.Status.OK).entity("Appointment with ID " + appointmentId + " was updated successfully").build();

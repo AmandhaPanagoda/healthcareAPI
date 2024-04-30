@@ -5,6 +5,7 @@
 package com.mycompany.healthcare.resource;
 
 import com.mycompany.healthcare.dao.BillingDAO;
+import com.mycompany.healthcare.dao.PatientDAO;
 import com.mycompany.healthcare.exception.ModelIdMismatchException;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
@@ -22,6 +23,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import com.mycompany.healthcare.model.Billing;
+import com.mycompany.healthcare.model.Patient;
 import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +40,7 @@ public class BillingResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BillingResource.class);
     private final BillingDAO billingDAO = new BillingDAO();
+    private final PatientDAO patientDAO = new PatientDAO();
 
     /**
      * Retrieves all billing records.
@@ -93,6 +96,14 @@ public class BillingResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
 
+        int patientId = bill.getPatient().getPersonId();
+        Patient patient = patientDAO.getPatientById(patientId);
+
+        if (patient == null) {
+            throw new ResourceNotFoundException("Patient does not exist");
+        }
+        bill.setPatient(patient);
+
         int newBillId = billingDAO.addBill(bill);
         return Response.status(Response.Status.CREATED).entity("New bill with ID: " + newBillId + " was added successfully").build();
     }
@@ -116,9 +127,17 @@ public class BillingResource {
         Billing existingBill = billingDAO.getBillById(billId);
 
         if (existingBill != null) {
-            updatedBill.setBillId(billId);
+            int patientId = updatedBill.getPatient().getPersonId();
+            Patient patient = patientDAO.getPatientById(patientId);
+
+            if (patient == null) {
+                throw new ResourceNotFoundException("Patient does not exist");
+            }
+            updatedBill.setPatient(patient);
+            
             billingDAO.updateBill(updatedBill);
             LOGGER.info("Bill record was updated. Updated Bill ID: " + billId);
+            
             return Response.status(Response.Status.OK).entity("Bill with ID " + billId + " was updated successfully").build();
         } else {
             LOGGER.error("Bill ID" + billId + " was not found");

@@ -24,10 +24,10 @@ public class Appointment {
     @Pattern(regexp = "\\d{2}:\\d{2}:\\d{2}", message = "Time must be in the format hh:mm:ss")
     private String time;
 
-    @NotEmpty(message = "Patient is required")
+    @NotEmpty(message = "Patient ID is required")
     private Patient patient;
 
-    @NotEmpty(message = "Doctor is required")
+    @NotEmpty(message = "Doctor ID is required")
     private Doctor doctor;
 
     public Appointment() {

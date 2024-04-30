@@ -28,7 +28,7 @@ public class Billing {
     @Pattern(regexp = "\\d{2}:\\d{2}:\\d{2}", message = "Time must be in the format hh:mm:ss")
     private String billTime;
 
-    @NotNull(message = "Patient is required")
+    @NotNull(message = "Patient ID is required")
     private Patient patient;
 
     private List<String> services;

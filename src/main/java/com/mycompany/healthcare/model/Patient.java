@@ -14,7 +14,6 @@ package com.mycompany.healthcare.model;
  */
 public class Patient extends Person {
 
-    private Integer patientId;
     private String healthStatus;
     private String medicalHistory;
 
@@ -22,19 +21,10 @@ public class Patient extends Person {
 
     }
 
-    public Patient(int patientId, int personId, String firstName, String lastName, long contactNo, String address, String gender, int age, String healthStatus, String medicalHistory) {
+    public Patient(int personId, String firstName, String lastName, long contactNo, String address, String gender, int age, String healthStatus, String medicalHistory) {
         super(personId, firstName, lastName, contactNo, address, gender, age);
-        this.patientId = patientId;
         this.healthStatus = healthStatus;
         this.medicalHistory = medicalHistory;
-    }
-
-    public int getPatientId() {
-        return patientId;
-    }
-
-    public void setPatientId(int patientId) {
-        this.patientId = patientId;
     }
 
     public String getHealthStatus() {

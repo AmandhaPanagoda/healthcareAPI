@@ -27,10 +27,10 @@ public class PatientDAO {
     private static final Map<Integer, Patient> patients = new HashMap<>();
 
     static {
-        patients.put(1, new Patient(1, 3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory"));
-        patients.put(2, new Patient(2, 4, "Alice", "Smith", 1234567890, "123 Main St, Anytown, USA", "F", 25, "Healthy", "No significant medical history"));
-        patients.put(3, new Patient(3, 5, "Bob", "Johnson", 1876543210, "456 Elm St, Othertown, USA", "M", 35, "Diagnosed with diabetes", "Regularly monitored for blood sugar levels"));
-        patients.put(4, new Patient(4, 6, "Charlie", "Brown", 1551234567, "789 Oak St, Anotherplace, USA", "M", 45, "Recovering from surgery", "Underwent appendectomy last month"));
+        patients.put(1, new Patient(3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory"));
+        patients.put(2, new Patient(4, "Alice", "Smith", 1234567890, "123 Main St, Anytown, USA", "F", 25, "Healthy", "No significant medical history"));
+        patients.put(3, new Patient(5, "Bob", "Johnson", 1876543210, "456 Elm St, Othertown, USA", "M", 35, "Diagnosed with diabetes", "Regularly monitored for blood sugar levels"));
+        patients.put(4, new Patient(6, "Charlie", "Brown", 1551234567, "789 Oak St, Anotherplace, USA", "M", 45, "Recovering from surgery", "Underwent appendectomy last month"));
     }
 
     /**
@@ -58,19 +58,12 @@ public class PatientDAO {
      * Adds a new patient.
      *
      * @param patient The patient to add.
-     * @return The ID of the newly added patient.
+     *
      */
-    public int addPatient(Patient patient) {
+    public void addPatient(Patient patient) {
         LOGGER.info("Adding a new patient");
-
-        Helper<Patient> helper = new Helper<>();
-        int newPatientId = helper.getNextId(patients); // Get new patient ID
-
-        patient.setPatientId(newPatientId); // Set the new patient ID
-        patients.put(newPatientId, patient);
-        LOGGER.info("New patient with ID " + newPatientId + " was added to patient list");
-
-        return newPatientId;
+        patients.put(patient.getPersonId(), patient);
+        LOGGER.info("New patient with ID " + patient.getPersonId() + " was added to patient list");
     }
 
     /**
@@ -81,11 +74,10 @@ public class PatientDAO {
     public void updatePatient(Patient updatedPatient) {
         LOGGER.info("Update patient record");
 
-        Patient existingPatient = patients.get(updatedPatient.getPatientId());
+        Patient existingPatient = patients.get(updatedPatient.getPersonId());
         if (existingPatient != null) {
-            updatedPatient.setPersonId(existingPatient.getPersonId());
-            patients.put(updatedPatient.getPatientId(), updatedPatient);
-            LOGGER.info("Patient record was updated. Patient ID : " + updatedPatient.getPatientId());
+            patients.put(updatedPatient.getPersonId(), updatedPatient);
+            LOGGER.info("Patient record was updated. Patient ID : " + updatedPatient.getPersonId());
         }
     }
 

@@ -32,7 +32,7 @@ public class BillingDAO {
     private static final Map<Integer, Billing> bills = new HashMap<>();
 
     static {
-        Patient patient = new Patient(1, 3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
+        Patient patient = new Patient(3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
         String currentDate = formatSimpleDate(new Date());
         String currentTime = formatSimpleTime(new Date());
 
@@ -73,7 +73,7 @@ public class BillingDAO {
         List<Billing> matchingBills = new ArrayList<>();
 
         for (Billing bill : bills.values()) {
-            int billPatientId = bill.getPatient().getPatientId();
+            int billPatientId = bill.getPatient().getPersonId();
             if (patientId == billPatientId) {
                 matchingBills.add(bill);
             }

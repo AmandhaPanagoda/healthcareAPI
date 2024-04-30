@@ -4,10 +4,14 @@
  */
 package com.mycompany.healthcare.resource;
 
+import com.mycompany.healthcare.dao.DoctorDAO;
+import com.mycompany.healthcare.dao.PatientDAO;
 import com.mycompany.healthcare.dao.PrescriptionDAO;
 import com.mycompany.healthcare.exception.ModelIdMismatchException;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
+import com.mycompany.healthcare.model.Doctor;
+import com.mycompany.healthcare.model.Patient;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -37,6 +41,8 @@ public class PrescriptionResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PrescriptionResource.class);
     private final PrescriptionDAO prescriptionDAO = new PrescriptionDAO();
+    private final PatientDAO patientDAO = new PatientDAO();
+    private final DoctorDAO doctorDAO = new DoctorDAO();
 
     /**
      * Retrieves all prescriptions.
@@ -47,6 +53,7 @@ public class PrescriptionResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Collection<Prescription> getAllPrescriptions() {
+        LOGGER.info("Fetching all prescriptions");
         if (!prescriptionDAO.getAllPrescriptions().isEmpty()) {
             return prescriptionDAO.getAllPrescriptions().values();
         } else {
@@ -92,6 +99,19 @@ public class PrescriptionResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
 
+        int patientId = prescription.getPrescribedFor().getPersonId();
+        int doctorId = prescription.getPrescribedBy().getPersonId();
+        Patient patient = patientDAO.getPatientById(patientId);
+        Doctor doctor = doctorDAO.getDoctorById(doctorId);
+
+        if (doctor == null) {
+            throw new ResourceNotFoundException("Doctor does not exist");
+        } else if (patient == null) {
+            throw new ResourceNotFoundException("Patient does not exist");
+        }
+        prescription.setPrescribedBy(doctor);
+        prescription.setPrescribedFor(patient);
+
         int newPrescriptionId = prescriptionDAO.addPrescription(prescription);
         return Response.status(Response.Status.CREATED).entity("New prescription with ID: " + newPrescriptionId + " was added successfully").build();
     }
@@ -115,6 +135,20 @@ public class PrescriptionResource {
         Prescription existingPrescription = prescriptionDAO.getPrescriptionById(prescriptionId);
 
         if (existingPrescription != null) {
+            
+            int patientId = updatedPrescription.getPrescribedFor().getPersonId();
+            int doctorId = updatedPrescription.getPrescribedBy().getPersonId();
+            Patient patient = patientDAO.getPatientById(patientId);
+            Doctor doctor = doctorDAO.getDoctorById(doctorId);
+
+            if (doctor == null) {
+                throw new ResourceNotFoundException("Doctor does not exist");
+            } else if (patient == null) {
+                throw new ResourceNotFoundException("Patient does not exist");
+            }
+            updatedPrescription.setPrescribedBy(doctor);
+            updatedPrescription.setPrescribedFor(patient);
+            
             prescriptionDAO.updatePrescription(updatedPrescription);
             LOGGER.info("Prescription record was updated. Updated Prescription ID: " + prescriptionId);
             return Response.status(Response.Status.OK).entity("Prescription with ID " + prescriptionId + " was updated successfully").build();
@@ -135,6 +169,7 @@ public class PrescriptionResource {
     @DELETE
     @Path("/{prescriptionId}")
     public Response deletePrescription(@PathParam("prescriptionId") int prescriptionId) {
+        LOGGER.info("Deleting prescription with ID: " + prescriptionId);
         boolean removed = prescriptionDAO.deletePrescription(prescriptionId);
         if (removed) {
             return Response.status(Response.Status.OK).entity("Prescription with ID " + prescriptionId + " was deleted successfully").build();
