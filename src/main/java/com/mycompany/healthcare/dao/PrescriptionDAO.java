@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,15 +70,9 @@ public class PrescriptionDAO {
     public List<Prescription> getPrescriptionByPatientId(int patientId) {
         LOGGER.info("Retrieving prescription by Patient ID " + patientId);
 
-        List<Prescription> matchingPrescriptions = new ArrayList<>();
-
-        for (Prescription prescription : prescriptions.values()) {
-            int prescriptionPatientID = prescription.getPrescribedFor().getPersonId();
-            if (patientId == prescriptionPatientID) {
-                matchingPrescriptions.add(prescription);
-            }
-        }
-        return matchingPrescriptions;
+        return prescriptions.values().stream()
+                .filter(prescription -> prescription.getPrescribedFor().getPersonId() == patientId)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -91,13 +86,9 @@ public class PrescriptionDAO {
 
         List<Prescription> matchingPrescriptions = new ArrayList<>();
 
-        for (Prescription prescription : prescriptions.values()) {
-            int prescriptionDoctorID = prescription.getPrescribedBy().getPersonId();
-            if (doctorId == prescriptionDoctorID) {
-                matchingPrescriptions.add(prescription);
-            }
-        }
-        return matchingPrescriptions;
+        return prescriptions.values().stream()
+                .filter(prescription -> prescription.getPrescribedBy().getPersonId() == doctorId)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -107,16 +98,19 @@ public class PrescriptionDAO {
      * @return The ID assigned to the new prescription.
      */
     public int addPrescription(Prescription prescription) {
-        LOGGER.info("Adding a new prescription");
+        try {
+            Helper<Prescription> helper = new Helper<>();
+            int newPrescriptionId = helper.getNextId(prescriptions); // generate the next prescription ID
+            prescription.setPrescriptionId(newPrescriptionId);
 
-        Helper<Prescription> helper = new Helper<>();
-        int newPrescriptionId = helper.getNextId(prescriptions);
+            prescriptions.put(newPrescriptionId, prescription); // add the new prescription 
+            LOGGER.info("New prescription with ID " + newPrescriptionId + " is added to prescriptions list");
 
-        prescription.setPrescriptionId(newPrescriptionId);
-        prescriptions.put(newPrescriptionId, prescription);
-        LOGGER.info("New prescription with ID " + newPrescriptionId + " is added to prescriptions list");
-
-        return newPrescriptionId;
+            return newPrescriptionId;
+        } catch (Exception e) {
+            LOGGER.error("Error adding prescription: " + e.getMessage(), e);
+            return -1;
+        }
     }
 
     /**
@@ -125,14 +119,13 @@ public class PrescriptionDAO {
      * @param updatedPrescription The updated prescription object.
      */
     public void updatePrescription(Prescription updatedPrescription) {
-        LOGGER.info("Update prescription");
-        Prescription prescription = prescriptions.get(updatedPrescription.getPrescriptionId());
-        if (prescription != null) {
+        try {
             prescriptions.put(updatedPrescription.getPrescriptionId(), updatedPrescription);
             LOGGER.info("Prescription was updated. Prescription ID : " + updatedPrescription.getPrescriptionId());
-        } else {
-            LOGGER.warn("Prescription with ID " + updatedPrescription.getPrescriptionId() + " not found, cannot update");
+        } catch (Exception e) {
+            LOGGER.error("Prescription ID: " + updatedPrescription.getPrescriptionId() + ". Error updating prescription: " + e.getMessage(), e);
         }
+
     }
 
     /**
@@ -143,12 +136,17 @@ public class PrescriptionDAO {
      * false.
      */
     public boolean deletePrescription(int prescriptionId) {
-        Prescription removed = prescriptions.remove(prescriptionId);
-        if (removed != null) {
-            LOGGER.info("Deleting the Prescription with ID: " + prescriptionId);
-            return true;
-        } else {
-            LOGGER.warn("Prescription with ID " + prescriptionId + " not found, cannot delete");
+        try {
+            Prescription removedPrescription = prescriptions.remove(prescriptionId);
+            if (removedPrescription != null) {
+                LOGGER.info("Prescription with ID {} was successfully deleted", prescriptionId);
+                return true;
+            } else {
+                LOGGER.info("Prescription with ID {} was not found", prescriptionId);
+                return false;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error deleting prescription with ID {}: {}", prescriptionId, e.getMessage());
             return false;
         }
     }
@@ -210,7 +208,7 @@ public class PrescriptionDAO {
 
             if (matchPatientFirstName && matchPatientLastName && matchDoctorFirstName
                     && matchDoctorLastName && matchDateRange) {
-                matchingPrescriptions.add(prescription);
+                matchingPrescriptions.add(prescription); // add the matching prescription to the list
             }
         }
         return matchingPrescriptions;

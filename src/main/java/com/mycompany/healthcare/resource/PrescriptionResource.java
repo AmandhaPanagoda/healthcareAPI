@@ -53,8 +53,8 @@ public class PrescriptionResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Collection<Prescription> getAllPrescriptions() {
-        LOGGER.info("Fetching all prescriptions");
         if (!prescriptionDAO.getAllPrescriptions().isEmpty()) {
+            LOGGER.info("Fetching all prescriptions");
             return prescriptionDAO.getAllPrescriptions().values();
         } else {
             throw new ResourceNotFoundException("No prescriptions were found");
@@ -73,9 +73,9 @@ public class PrescriptionResource {
     @Path("/{prescriptionId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Prescription getPrescriptionById(@PathParam("prescriptionId") int prescriptionId) {
-        LOGGER.info("Getting the prescription by ID: " + prescriptionId);
-        Prescription prescription = prescriptionDAO.getPrescriptionById(prescriptionId);
+        Prescription prescription = prescriptionDAO.getPrescriptionById(prescriptionId); // get the prescription
         if (prescription != null) {
+            LOGGER.info("Getting the prescription by ID: " + prescriptionId);
             return prescription;
         } else {
             throw new ResourceNotFoundException("Prescription with ID " + prescriptionId + " was not found");
@@ -91,7 +91,10 @@ public class PrescriptionResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addPrescription(Prescription prescription) {
-        LOGGER.info("Adding a new prescription");
+        if (prescription == null) {
+            LOGGER.error("Prescription object cannot be null");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Prescription cannot be null").build();
+        }
 
         // Validate the prescription object
         String validationError = ValidationHelper.validate(prescription);
@@ -101,19 +104,22 @@ public class PrescriptionResource {
 
         int patientId = prescription.getPrescribedFor().getPersonId();
         int doctorId = prescription.getPrescribedBy().getPersonId();
-        Patient patient = patientDAO.getPatientById(patientId);
-        Doctor doctor = doctorDAO.getDoctorById(doctorId);
+        Patient patient = patientDAO.getPatientById(patientId); // get the patient details
+        Doctor doctor = doctorDAO.getDoctorById(doctorId); // get the doctor details
 
         if (doctor == null) {
             throw new ResourceNotFoundException("Doctor does not exist");
         } else if (patient == null) {
             throw new ResourceNotFoundException("Patient does not exist");
         }
-        prescription.setPrescribedBy(doctor);
-        prescription.setPrescribedFor(patient);
+        prescription.setPrescribedBy(doctor); // set the doctor details in the prescription
+        prescription.setPrescribedFor(patient); // set the patient details in the prescription
 
-        int newPrescriptionId = prescriptionDAO.addPrescription(prescription);
-        return Response.status(Response.Status.CREATED).entity("New prescription with ID: " + newPrescriptionId + " was added successfully").build();
+        int newPrescriptionId = prescriptionDAO.addPrescription(prescription); // add the new prescription
+        if (newPrescriptionId != -1) {
+            return Response.status(Response.Status.CREATED).entity("New prescription with ID: " + newPrescriptionId + " was added successfully").build();
+        }
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An unexpected error occured when adding the prescription").build();
     }
 
     /**
@@ -127,29 +133,40 @@ public class PrescriptionResource {
     @Path("/{prescriptionId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updatePrescription(@PathParam("prescriptionId") int prescriptionId, Prescription updatedPrescription) {
-        if (prescriptionId != updatedPrescription.getPrescriptionId()) {
-            LOGGER.info("URL parameter prescription ID and the passed prescription ID do not match");
-            throw new ModelIdMismatchException("The passed prescription IDs do not match");
+        if (updatedPrescription == null) {
+            LOGGER.error("Prescription object cannot be null");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Prescription cannot be null").build();
         }
-        LOGGER.info("Updating prescription with ID: " + prescriptionId);
+
+        if (prescriptionId != updatedPrescription.getPrescriptionId()) {
+            throw new ModelIdMismatchException("The passed prescription IDs do not match"); // IDs are immutable and generated
+        }
+
+        // Validate the prescription object
+        String validationError = ValidationHelper.validate(updatedPrescription);
+        if (validationError != null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
+        }
+        
+        // Get the existing prescription
         Prescription existingPrescription = prescriptionDAO.getPrescriptionById(prescriptionId);
 
         if (existingPrescription != null) {
-            
             int patientId = updatedPrescription.getPrescribedFor().getPersonId();
             int doctorId = updatedPrescription.getPrescribedBy().getPersonId();
-            Patient patient = patientDAO.getPatientById(patientId);
-            Doctor doctor = doctorDAO.getDoctorById(doctorId);
+            Patient patient = patientDAO.getPatientById(patientId); // get the existing patient details
+            Doctor doctor = doctorDAO.getDoctorById(doctorId); // get the existing doctor details
 
             if (doctor == null) {
                 throw new ResourceNotFoundException("Doctor does not exist");
             } else if (patient == null) {
                 throw new ResourceNotFoundException("Patient does not exist");
             }
-            updatedPrescription.setPrescribedBy(doctor);
-            updatedPrescription.setPrescribedFor(patient);
+            updatedPrescription.setPrescribedBy(doctor); // set the doctor details in the prescription
+            updatedPrescription.setPrescribedFor(patient); // set the patient details in the prescription
+
+            prescriptionDAO.updatePrescription(updatedPrescription); // update the prescription
             
-            prescriptionDAO.updatePrescription(updatedPrescription);
             LOGGER.info("Prescription record was updated. Updated Prescription ID: " + prescriptionId);
             return Response.status(Response.Status.OK).entity("Prescription with ID " + prescriptionId + " was updated successfully").build();
         } else {
@@ -169,7 +186,6 @@ public class PrescriptionResource {
     @DELETE
     @Path("/{prescriptionId}")
     public Response deletePrescription(@PathParam("prescriptionId") int prescriptionId) {
-        LOGGER.info("Deleting prescription with ID: " + prescriptionId);
         boolean removed = prescriptionDAO.deletePrescription(prescriptionId);
         if (removed) {
             return Response.status(Response.Status.OK).entity("Prescription with ID " + prescriptionId + " was deleted successfully").build();
@@ -203,8 +219,6 @@ public class PrescriptionResource {
             @QueryParam("doctorLastName") String doctorLastName,
             @QueryParam("fromDate") String fromDate,
             @QueryParam("toDate") String toDate) {
-
-        LOGGER.info("Searching for prescriptions...");
 
         if ((patientFirstName == null || patientFirstName.isEmpty())
                 && (patientLastName == null || patientLastName.isEmpty())
