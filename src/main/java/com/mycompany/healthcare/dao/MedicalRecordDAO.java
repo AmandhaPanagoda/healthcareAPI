@@ -11,13 +11,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Data Access Object (DAO) class for managing MedicalRecord objects.
- * Provides methods for CRUD operations and searching for medical records.
- * 
+ * Data Access Object (DAO) class for managing MedicalRecord objects. Provides
+ * methods for CRUD operations and searching for medical records.
+ *
  * @author Amandha
  */
 public class MedicalRecordDAO {
@@ -67,13 +68,10 @@ public class MedicalRecordDAO {
      */
     public MedicalRecord getMedicalRecordByPatientId(int patientId) {
         LOGGER.info("Retrieving medical record by Patient ID " + patientId);
-        for (MedicalRecord medicalRecord : medicalRecords.values()) {
-            if (medicalRecord.getPatient().getPersonId() == patientId) {
-                return medicalRecord;
-            }
-        }
-        LOGGER.info("Medical record of the patient ID " + patientId + " was not found");
-        return null;
+        return medicalRecords.values().stream()
+                .filter(medicalRecord -> medicalRecord.getPatient().getPersonId() == patientId)
+                .findFirst()
+                .orElse(null); // Return null if no record is found
     }
 
     /**
@@ -83,15 +81,19 @@ public class MedicalRecordDAO {
      * @return The ID of the newly added medical record.
      */
     public int addMedicalRecord(MedicalRecord medicalRecord) {
-        LOGGER.info("Adding a new medicalRecord");
-        Helper<MedicalRecord> helper = new Helper<>();
+        try {
+            Helper<MedicalRecord> helper = new Helper<>();
+            int newMedicalRecordId = helper.getNextId(medicalRecords); // generate the next medical record id
+            medicalRecord.setMedicalRecordId(newMedicalRecordId); // set the new medical record id
 
-        int newMedicalRecordId = helper.getNextId(medicalRecords); //get the next medical record id
-        medicalRecord.setMedicalRecordId(newMedicalRecordId); // set the new medical record id
-        medicalRecords.put(newMedicalRecordId, medicalRecord);
-        LOGGER.info("New medical record with ID " + newMedicalRecordId + " was added to medical records list");
+            medicalRecords.put(newMedicalRecordId, medicalRecord);
 
-        return newMedicalRecordId;
+            LOGGER.info("New medical record with ID " + newMedicalRecordId + " was added to medical records list");
+            return newMedicalRecordId;
+        } catch (Exception e) {
+            LOGGER.error("Error adding medical record: " + e.getMessage(), e);
+            return -1;
+        }
     }
 
     /**
@@ -100,9 +102,12 @@ public class MedicalRecordDAO {
      * @param updatedMedicalRecord The updated MedicalRecord object.
      */
     public void updateMedicalRecord(MedicalRecord updatedMedicalRecord) {
-        LOGGER.info("Update medical record");
-        medicalRecords.put(updatedMedicalRecord.getMedicalRecordId(), updatedMedicalRecord);
-        LOGGER.info("Medical record was updated. MedicalRecord ID : " + updatedMedicalRecord.getMedicalRecordId());
+        try {
+            medicalRecords.put(updatedMedicalRecord.getMedicalRecordId(), updatedMedicalRecord);
+            LOGGER.info("Medical record was updated. MedicalRecord ID : " + updatedMedicalRecord.getMedicalRecordId());
+        } catch (Exception e) {
+            LOGGER.error("Medical record ID: " + updatedMedicalRecord.getMedicalRecordId() + ". Error updating medical record: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -112,8 +117,19 @@ public class MedicalRecordDAO {
      * @return true if the medical record was deleted, false otherwise.
      */
     public boolean deleteMedicalRecord(int medicalRecordId) {
-        LOGGER.info("Deleting the Medical Record with ID: " + medicalRecordId);
-        return medicalRecords.remove(medicalRecordId) != null;
+        try {
+            MedicalRecord removedRecord = medicalRecords.remove(medicalRecordId);
+            if (removedRecord != null) {
+                LOGGER.info("Medical Record with ID {} was successfully deleted", medicalRecordId);
+                return true;
+            } else {
+                LOGGER.info("Medical Record with ID {} was not found", medicalRecordId);
+                return false;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error deleting Medical Record with ID {}: {}", medicalRecordId, e.getMessage());
+            return false;
+        }
     }
 
     /**
@@ -137,7 +153,7 @@ public class MedicalRecordDAO {
             boolean matchBloodGroup = bloodGroup == null || bloodGroup.equalsIgnoreCase(medicalRecord.getBloodGroup());
 
             if (matchPatientFirstName && matchPatientLastName && matchBloodGroup) {
-                matchingMedicalRecords.add(medicalRecord.getMedicalRecordId(), medicalRecord);
+                matchingMedicalRecords.add(medicalRecord); // add the matching medical record to the list
             }
         }
         return matchingMedicalRecords;
