@@ -4,6 +4,8 @@
  */
 package com.mycompany.healthcare.model;
 
+import javax.validation.constraints.NotNull;
+
 /**
  * Model class representing a patient, extending the Person class. Includes
  * patient-specific fields such as patient ID, health status, and medical
@@ -13,7 +15,8 @@ package com.mycompany.healthcare.model;
  * @author Amandha
  */
 public class Patient extends Person {
-
+    
+    @NotNull(message = "Health Status is required")
     private String healthStatus;
     private String medicalHistory;
 

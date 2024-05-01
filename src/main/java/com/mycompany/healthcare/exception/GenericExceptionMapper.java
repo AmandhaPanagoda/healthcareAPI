@@ -5,6 +5,8 @@
 package com.mycompany.healthcare.exception;
 
 /**
+ * Exception mapper for handling various exceptions and providing appropriate responses.
+ * This class maps exceptions to corresponding HTTP status codes and error messages.
  *
  * @author Amandha
  */
@@ -25,33 +27,43 @@ public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
 
     @Override
     public Response toResponse(Throwable exception) {
+        // Handling NotAllowedException
         if (exception instanceof NotAllowedException) {
-            LOGGER.warn("Method not allowed: " + exception.getMessage());
+            LOGGER.error("Method not allowed: " + exception.getMessage());
             return Response.status(Response.Status.METHOD_NOT_ALLOWED)
                     .entity("Sorry, this action is not allowed. Error: " + exception.getMessage())
                     .build();
-        } else if (exception instanceof NotFoundException) {
-            LOGGER.warn("Resource not found: " + exception.getMessage());
+        } 
+        // Handling NotFoundException
+        else if (exception instanceof NotFoundException) {
+            LOGGER.error("Resource not found: " + exception.getMessage());
             return Response.status(Response.Status.NOT_FOUND)
                     .entity("Sorry, the requested resource was not found. Error: " + exception.getMessage())
                     .build();
-        } else if (exception instanceof ForbiddenException) {
-            LOGGER.warn("Access forbidden: " + exception.getMessage());
+        } 
+        // Handling ForbiddenException
+        else if (exception instanceof ForbiddenException) {
+            LOGGER.error("Access forbidden: " + exception.getMessage());
             return Response.status(Response.Status.FORBIDDEN)
                     .entity("Sorry, you don't have permission to access this resource. Error: " + exception.getMessage())
                     .build();
-        } else if (exception instanceof BadRequestException) {
-            LOGGER.warn("Bad request: " + exception.getMessage());
+        } 
+        // Handling BadRequestException
+        else if (exception instanceof BadRequestException) {
+            LOGGER.error("Bad request: " + exception.getMessage());
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("Sorry, there was an error in your request. Error: " + exception.getMessage())
                     .build();
-        } else if (exception instanceof NullPointerException) {
-            LOGGER.warn("Null pointer exception: " + exception.getMessage());
+        } 
+        // Handling NullPointerException
+        else if (exception instanceof NullPointerException) {
+            LOGGER.error("Null pointer exception: " + exception.getMessage());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Error when processing your request. The request body is empty or contains invalid data. Please provide valid data and try again.")
                     .build();
         }
-
+        
+        // Handling other unexpected exceptions
         LOGGER.error("An unexpected error occurred: " + exception.getMessage()  + " Exception: " + exception.toString());
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity("Sorry, an unexpected error occurred. Error: " + exception.getMessage())

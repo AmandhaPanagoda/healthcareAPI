@@ -18,11 +18,15 @@ public class MedicalRecord {
 
     private Integer medicalRecordId;
 
-    @NotNull(message = "Patient is required")
+    @NotNull(message = "Patient ID is required")
     private Patient patient;
 
     private String allergies;
+    
+    @NotNull(message = "Diagnosis is required")
     private String diagnosis;
+    
+    @NotNull(message = "Treatement is required")
     private String treatment;
 
     @NotEmpty(message = "Blood Group is required")

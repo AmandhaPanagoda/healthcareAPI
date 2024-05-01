@@ -5,6 +5,7 @@
 package com.mycompany.healthcare.model;
 
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 /**
@@ -24,10 +25,10 @@ public class Appointment {
     @Pattern(regexp = "\\d{2}:\\d{2}:\\d{2}", message = "Time must be in the format hh:mm:ss")
     private String time;
 
-    @NotEmpty(message = "Patient ID is required")
+    @NotNull(message = "Patient ID is required")
     private Patient patient;
 
-    @NotEmpty(message = "Doctor ID is required")
+    @NotNull(message = "Doctor ID is required")
     private Doctor doctor;
 
     public Appointment() {

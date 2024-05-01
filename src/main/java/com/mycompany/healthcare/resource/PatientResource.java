@@ -178,17 +178,12 @@ public class PatientResource {
     @Path("/{patientId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response partialUpdatePatient(@PathParam("patientId") int patientId, Patient partialUpdatedPatient) {
-        if (partialUpdatedPatient.getPersonId() != 0 && patientId != partialUpdatedPatient.getPersonId()) {
+        if (patientId != partialUpdatedPatient.getPersonId()) {
             LOGGER.info("URL parameter ID and the passed ID do not match");
             throw new ModelIdMismatchException("The passed IDs do not match");
         }
 
         Patient existingPatient = patientDAO.getPatientById(patientId);
-
-        if (partialUpdatedPatient.getPersonId() != 0 && partialUpdatedPatient.getPersonId() != existingPatient.getPersonId()) {
-            LOGGER.info("IDs are immutable. Cannot update the person ID");
-            throw new ModelIdMismatchException("IDs are immutable. Cannot update the person ID");
-        }
 
         if (existingPatient != null) {
             patientDAO.partialUpdatePatient(existingPatient, partialUpdatedPatient);
@@ -211,7 +206,7 @@ public class PatientResource {
     @DELETE
     @Path("/{patientId}")
     public Response deletePatient(@PathParam("patientId") int patientId) {
-        LOGGER.info("Deleting patient record ...");
+        LOGGER.info("Deleting patient record");
         boolean removed = patientDAO.deletePatient(patientId);
         if (removed) {
             return Response.status(Response.Status.OK).entity("Patient with ID " + patientId + " was deleted successfully").build();

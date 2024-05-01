@@ -12,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Exception mapper for handling ModelIdMismatchException.
+ * This class maps the ModelIdMismatchException to a 409 (Conflict) HTTP status code and returns the exception message as the response entity.
  *
  * @author Amandha
  */
@@ -21,8 +23,10 @@ public class ModelIdMismatchExceptionMapper implements ExceptionMapper<ModelIdMi
     
     @Override
     public Response toResponse(ModelIdMismatchException exception) {
+        // Log the exception
         LOGGER.error("ModelIdMismatchException caught: {}",exception.getMessage(), exception);
         
+        // Build and return the response
         return Response.status(Response.Status.CONFLICT)
                 .entity(exception.getMessage())
                 .type(MediaType.TEXT_PLAIN)

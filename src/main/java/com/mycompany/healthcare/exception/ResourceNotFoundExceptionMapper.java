@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Exception mapper for handling ResourceNotFoundException.
+ * This class maps the ResourceNotFoundException to a 404 (Not Found) HTTP status code and returns the exception message as the response entity.
  *
  * @author Amandha
  */
@@ -22,8 +24,10 @@ public class ResourceNotFoundExceptionMapper implements ExceptionMapper<Resource
     
     @Override
     public Response toResponse(ResourceNotFoundException exception) {
-        LOGGER.error("ResourceNotFoundException caught: {}",exception.getMessage(), exception);
+        // Log the exception
+        LOGGER.error("ResourceNotFoundException caught: {}",exception.getMessage());
         
+        // Build and return the response
         return Response.status(Response.Status.NOT_FOUND)
                 .entity(exception.getMessage())
                 .type(MediaType.TEXT_PLAIN)
