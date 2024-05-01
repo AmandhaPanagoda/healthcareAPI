@@ -17,13 +17,14 @@ import com.mycompany.healthcare.model.Billing;
 import com.mycompany.healthcare.model.Patient;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Data Access Object (DAO) class for managing billing 
- * Provides methods for retrieving, adding, updating, and deleting billing records.
- * 
+ * Data Access Object (DAO) class for managing billing Provides methods for
+ * retrieving, adding, updating, and deleting billing records.
+ *
  * @author Amandha
  */
 public class BillingDAO {
@@ -32,12 +33,25 @@ public class BillingDAO {
     private static final Map<Integer, Billing> bills = new HashMap<>();
 
     static {
-        Patient patient = new Patient(3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
         String currentDate = formatSimpleDate(new Date());
         String currentTime = formatSimpleTime(new Date());
-
+        Patient patient = new Patient(3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
         List<String> services = Arrays.asList("Consultation", "X-ray", "Medication");
         bills.put(1, new Billing(1, currentDate, currentTime, patient, services, 200.0, 150.0, 50.0));
+
+        Patient patient2 = new Patient(4, "Alice", "Smith", 1124579548, "2075 Elliott Street, NH", "F", 33, "General checkup", "None");
+        List<String> services2 = Arrays.asList("Consultation", "Blood test", "Prescription");
+        bills.put(2, new Billing(2, currentDate, currentTime, patient2, services2, 150.0, 100.0, 50.0));
+
+        Patient patient3 = new Patient(5, "Bob", "Johnson", 1987654321, "123 Main St, Anytown, USA", "M", 45, "Back pain", "Previous back injury");
+        List<String> services3 = Arrays.asList("Consultation", "MRI", "Physiotherapy");
+        bills.put(3, new Billing(3, currentDate, currentTime, patient3, services3, 300.0, 200.0, 100.0));
+
+        List<String> services4 = Arrays.asList("MRI", "Physical therapy", "Medication");
+        bills.put(2, new Billing(2, currentDate, currentTime, patient3, services3, 300.0, 200.0, 100.0));
+
+        List<String> services5 = Arrays.asList("Blood test", "Consultation", "Medication");
+        bills.put(3, new Billing(3, currentDate, currentTime, patient3, services3, 250.0, 150.0, 100.0));
     }
 
     /**
@@ -70,15 +84,9 @@ public class BillingDAO {
     public List<Billing> getBillByPatientId(int patientId) {
         LOGGER.info("Retrieving bills by Patient ID {}", patientId);
 
-        List<Billing> matchingBills = new ArrayList<>();
-
-        for (Billing bill : bills.values()) {
-            int billPatientId = bill.getPatient().getPersonId();
-            if (patientId == billPatientId) {
-                matchingBills.add(bill);
-            }
-        }
-        return matchingBills;
+        return bills.values().stream()
+                .filter(bill -> bill.getPatient().getPersonId() == patientId)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -88,16 +96,19 @@ public class BillingDAO {
      * @return The ID assigned to the new bill.
      */
     public int addBill(Billing bill) {
-        LOGGER.info("Adding a new bill");
+        try {
+            Helper<Billing> helper = new Helper<>();
+            int newBillId = helper.getNextId(bills); // generate the next bill ID
 
-        Helper<Billing> helper = new Helper<>();
-        int newBillId = helper.getNextId(bills);
+            bill.setBillId(newBillId); // set the new bill ID
+            bills.put(newBillId, bill);
+            LOGGER.info("New bill with ID {} is added to bills list", newBillId);
 
-        bill.setBillId(newBillId);
-        bills.put(newBillId, bill);
-        LOGGER.info("New bill with ID {} is added to bills list", newBillId);
-
-        return newBillId;
+            return newBillId;
+        } catch (Exception e) {
+            LOGGER.error("Error adding bill: " + e.getMessage(), e);
+            return -1;
+        }
     }
 
     /**
@@ -106,13 +117,11 @@ public class BillingDAO {
      * @param updatedBill The updated bill object.
      */
     public void updateBill(Billing updatedBill) {
-        LOGGER.info("Update bill");
-        Billing existingBill = bills.get(updatedBill.getBillId());
-        if (existingBill != null) {
+        try {
             bills.put(updatedBill.getBillId(), updatedBill);
             LOGGER.info("Bill was updated. Bill ID : {}", updatedBill.getBillId());
-        } else {
-            LOGGER.info("Bill with ID {} was not found", updatedBill.getBillId());
+        } catch (Exception e) {
+            LOGGER.error("Bill ID: " + updatedBill.getBillId()+ ". Error updating bill: " + e.getMessage(), e);
         }
     }
 
@@ -123,9 +132,14 @@ public class BillingDAO {
      * @return True if the bill was successfully deleted, otherwise false.
      */
     public boolean deleteBill(int billId) {
-        boolean removed = bills.remove(billId) != null;
-        LOGGER.info("Deleting the Bill with ID: {}", billId);
-        return removed;
+        Billing removedBill = bills.remove(billId);
+        if (removedBill != null) {
+            LOGGER.info("Bill with ID {} was successfully deleted", billId);
+            return true;
+        } else {
+            LOGGER.info("Bill with ID {} was not found", billId);
+            return false;
+        }
     }
 
     /**

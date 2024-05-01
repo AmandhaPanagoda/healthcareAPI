@@ -30,10 +30,17 @@ public class Billing {
 
     @NotNull(message = "Patient ID is required")
     private Patient patient;
-
+    
+    @NotNull(message = "Services are required")
     private List<String> services;
+    
+    @NotNull(message = "Invoiced amount is required")
     private Double invoicedAmount;
+    
+    @NotNull(message = "Payment is required")
     private Double payment;
+    
+    @NotNull(message = "Outstanding balance is required")
     private Double outstandingBalance;
 
     public Billing() {

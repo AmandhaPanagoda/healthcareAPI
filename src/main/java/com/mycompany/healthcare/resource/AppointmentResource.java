@@ -138,7 +138,7 @@ public class AppointmentResource {
         }
 
         if (appointmentId != updatedAppointment.getAppointmentId()) { // IDs are immutable when updating
-            throw new ModelIdMismatchException("IDs are immutable. The passed appointment IDs do not match");
+            throw new ModelIdMismatchException("The passed appointment IDs do not match");
         }
         
         // Validate the appointment object

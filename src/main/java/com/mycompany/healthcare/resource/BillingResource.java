@@ -52,9 +52,10 @@ public class BillingResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Collection<Billing> getAllBills() {
         if (!billingDAO.getAllBills().isEmpty()) {
+            LOGGER.info("Returning all bills");
             return billingDAO.getAllBills().values();
         } else {
-            throw new ResourceNotFoundException("No records were found");
+            throw new ResourceNotFoundException("No bills were found");
         }
     }
 
@@ -70,9 +71,9 @@ public class BillingResource {
     @Path("/{billId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Billing getAppointmentById(@PathParam("billId") int billId) {
-        LOGGER.info("Getting the bill by ID: " + billId);
-        Billing bill = billingDAO.getBillById(billId);
+        Billing bill = billingDAO.getBillById(billId); // get the existing bill 
         if (bill != null) {
+            LOGGER.info("Getting the bill by ID: " + billId);
             return bill;
         } else {
             throw new ResourceNotFoundException("Bill with ID " + billId + " was not found");
@@ -88,7 +89,10 @@ public class BillingResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addBill(Billing bill) {
-        LOGGER.info("Adding a new bill");
+        if (bill == null) {
+            LOGGER.error("Bill object cannot be null");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Bill cannot be null").build();
+        }
 
         // Validate the bill object
         String validationError = ValidationHelper.validate(bill);
@@ -105,7 +109,11 @@ public class BillingResource {
         bill.setPatient(patient);
 
         int newBillId = billingDAO.addBill(bill);
-        return Response.status(Response.Status.CREATED).entity("New bill with ID: " + newBillId + " was added successfully").build();
+
+        if (newBillId != -1) {
+            return Response.status(Response.Status.CREATED).entity("New bill with ID: " + newBillId + " was added successfully").build();
+        }
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An unexpected error occured when adding the bill").build();
     }
 
     /**
@@ -119,28 +127,37 @@ public class BillingResource {
     @Path("/{billId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateBill(@PathParam("billId") int billId, Billing updatedBill) {
+        if (updatedBill == null) {
+            LOGGER.error("Bill object cannot be null");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Bill cannot be null").build();
+        }
+
         if (billId != updatedBill.getBillId()) {
-            LOGGER.info("URL parameter bill ID and the passed bill ID do not match");
             throw new ModelIdMismatchException("The passed bill IDs do not match");
         }
-        LOGGER.info("Updating bill with ID: " + billId);
-        Billing existingBill = billingDAO.getBillById(billId);
+
+        // Validate the bill object
+        String validationError = ValidationHelper.validate(updatedBill);
+        if (validationError != null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
+        }
+
+        Billing existingBill = billingDAO.getBillById(billId); // check for the existing bill
 
         if (existingBill != null) {
             int patientId = updatedBill.getPatient().getPersonId();
-            Patient patient = patientDAO.getPatientById(patientId);
+            Patient patient = patientDAO.getPatientById(patientId); // get the existing patient record
 
             if (patient == null) {
                 throw new ResourceNotFoundException("Patient does not exist");
             }
-            updatedBill.setPatient(patient);
+            updatedBill.setPatient(patient); // set the patient details
+
+            billingDAO.updateBill(updatedBill); // update the existing bill
             
-            billingDAO.updateBill(updatedBill);
             LOGGER.info("Bill record was updated. Updated Bill ID: " + billId);
-            
             return Response.status(Response.Status.OK).entity("Bill with ID " + billId + " was updated successfully").build();
         } else {
-            LOGGER.error("Bill ID" + billId + " was not found");
             throw new ResourceNotFoundException("Bill with ID " + billId + " was not found");
         }
     }
