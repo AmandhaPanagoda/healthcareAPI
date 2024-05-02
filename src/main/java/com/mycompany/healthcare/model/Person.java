@@ -43,7 +43,7 @@ public class Person {
     public Person() {
     }
 
-    public Person(int personId, String firstName, String lastName, long contactNo, String address, String gender, int age) {
+    public Person(int personId, String firstName, String lastName, long contactNo, String address, String gender, Integer age) {
         this.personId = personId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -77,11 +77,11 @@ public class Person {
         this.lastName = lastName;
     }
 
-    public long getContactNo() {
+    public Long getContactNo() {
         return contactNo;
     }
 
-    public void setContactNo(long contactNo) {
+    public void setContactNo(Long contactNo) {
         this.contactNo = contactNo;
     }
 
@@ -101,11 +101,11 @@ public class Person {
         this.gender = gender;
     }
 
-    public int getAge() {
+    public Integer getAge() {
         return age;
     }
 
-    public void setAge(int age) {
+    public void setAge(Integer age) {
         this.age = age;
     }
 }

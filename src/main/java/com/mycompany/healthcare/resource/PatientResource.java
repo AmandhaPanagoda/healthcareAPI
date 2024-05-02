@@ -64,8 +64,8 @@ public class PatientResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Collection<Patient> getAllPatients() {
-        LOGGER.info("Fetching all patient records");
         if (!patientDAO.getAllPatients().isEmpty()) {
+            LOGGER.info("Fetching all patient records");
             return patientDAO.getAllPatients().values();
         } else {
             throw new ResourceNotFoundException("No patient records were found");
@@ -84,9 +84,9 @@ public class PatientResource {
     @Path("/{patientId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Patient getPatientById(@PathParam("patientId") int patientId) {
-        LOGGER.info("Getting the patient by ID: " + patientId);
         Patient patient = patientDAO.getPatientById(patientId);
         if (patient != null) {
+            LOGGER.info("Getting the patient by ID: " + patientId);
             return patient;
         } else {
             throw new ResourceNotFoundException("Patient with ID " + patientId + " was not found");
@@ -104,22 +104,26 @@ public class PatientResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addPatient(Patient patient) {
         if (patient == null) {
-            throw new BadRequestException("Patients record cannot be null");
+            LOGGER.error("Patient object cannot be null");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Patient cannot be null").build();
         }
-        LOGGER.info("Adding a new patient");
 
         // Validate the patient object
         String validationError = ValidationHelper.validate(patient);
         if (validationError != null) {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
-        
-        Person person = createPerson(patient);
-        int newPatientId = personDAO.addPerson(person); // add the new patient to person record
-        patient.setPersonId(newPatientId);
-        patientDAO.addPatient(patient); // add the new patient to the patients list and get new patient id
 
-        return Response.status(Response.Status.CREATED).entity("New patient with ID: " + newPatientId + " was added successfully").build();
+        Person person = createPerson(patient); // create a person object 
+        int newPatientId = personDAO.addPerson(person); // add the new person to person record
+
+        if (newPatientId != -1) {
+            patient.setPersonId(newPatientId); // set the new person ID of the patient
+            patientDAO.addPatient(patient); // add the new patient to the patients list and get new patient id
+
+            return Response.status(Response.Status.CREATED).entity("New patient with ID: " + newPatientId + " was added successfully").build();
+        }
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An unexpected error occured when adding the patient").build();
     }
 
     /**
@@ -137,7 +141,12 @@ public class PatientResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updatePatient(@PathParam("patientId") int patientId, Patient updatedPatient) {
         if (updatedPatient == null) {
-            throw new BadRequestException("Patients record cannot be null");
+            LOGGER.error("Patient object cannot be null");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Patient cannot be null").build();
+        }
+
+        if (patientId != updatedPatient.getPersonId()) { // IDs are immutable when updating
+            throw new ModelIdMismatchException("The passed patient IDs do not match");
         }
 
         // Validate the patient object
@@ -146,23 +155,19 @@ public class PatientResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
 
-        if (patientId != updatedPatient.getPersonId()) { // IDs are immutable when updating
-            LOGGER.info("URL parameter ID and the passed ID do not match");
-            throw new ModelIdMismatchException("IDs are immutable. The passed patient IDs do not match");
-        }
-
+        // get the existing patient record
         Patient existingPatient = patientDAO.getPatientById(patientId);
 
-        if (existingPatient == null) {
-            LOGGER.error("Patient ID" + patientId + " was not found");
-            throw new ResourceNotFoundException("Error in updating! Patient with ID " + patientId + " was not found");
-
-        } else {
+        if (existingPatient != null) {
+            Person updatedPerson = createPerson(updatedPatient); // create a person object
+            updatedPerson.setPersonId(patientId); // set the person id of the person object
             patientDAO.updatePatient(updatedPatient); // update the patient record
-            personDAO.updatePerson(updatedPatient); // update the person record
-            String message = "Patient with ID " + patientId + " was successfully updated";
+            personDAO.updatePerson(updatedPerson); // update the person record
 
-            return Response.ok().entity(message).build(); // return a message indicating success
+            LOGGER.info("Patient record was updated. Updated Patient ID: " + patientId);
+            return Response.status(Response.Status.OK).entity("Patient with ID " + patientId + " was updated successfully").build();
+        } else {
+            throw new ResourceNotFoundException("Patient with ID " + patientId + " was not found");
         }
     }
 
@@ -178,19 +183,28 @@ public class PatientResource {
     @Path("/{patientId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response partialUpdatePatient(@PathParam("patientId") int patientId, Patient partialUpdatedPatient) {
-        if (patientId != partialUpdatedPatient.getPersonId()) {
-            LOGGER.info("URL parameter ID and the passed ID do not match");
-            throw new ModelIdMismatchException("The passed IDs do not match");
+        if (partialUpdatedPatient == null) {
+            LOGGER.error("Patient object cannot be null");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Patient cannot be null").build();
         }
 
+        if (patientId != partialUpdatedPatient.getPersonId()) {
+            throw new ModelIdMismatchException("The passed patient IDs do not match");
+        }
+
+        // Get the existing patient record
         Patient existingPatient = patientDAO.getPatientById(patientId);
 
         if (existingPatient != null) {
-            patientDAO.partialUpdatePatient(existingPatient, partialUpdatedPatient);
+            Person existingPerson = personDAO.getPersonById(patientId); // get existing person record
+            Person partialUpdatedPerson = createPerson(partialUpdatedPatient); // create a person object
+            partialUpdatedPerson.setPersonId(patientId); // set the ID of the person
+
+            patientDAO.partialUpdatePatient(existingPatient, partialUpdatedPatient); // update the patient record
+            personDAO.partialUpdatePerson(existingPerson, partialUpdatedPerson); // update the person record
 
             return Response.status(Response.Status.OK).entity("Patient with ID " + patientId + " was updated successfully").build();
         } else {
-            LOGGER.error("Patient ID" + patientId + " was not found");
             throw new ResourceNotFoundException("Patient with ID " + patientId + " was not found");
         }
     }
@@ -206,8 +220,7 @@ public class PatientResource {
     @DELETE
     @Path("/{patientId}")
     public Response deletePatient(@PathParam("patientId") int patientId) {
-        LOGGER.info("Deleting patient record");
-        boolean removed = patientDAO.deletePatient(patientId);
+        boolean removed = patientDAO.deletePatient(patientId); // delete the patient record
         if (removed) {
             return Response.status(Response.Status.OK).entity("Patient with ID " + patientId + " was deleted successfully").build();
         } else {
@@ -275,6 +288,13 @@ public class PatientResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPatientMedicalRecord(@PathParam("patientId") int patientId) {
         LOGGER.info("Searching for medical record of patient with ID: " + patientId);
+
+        // Validate if the patient exists
+        Patient patient = patientDAO.getPatientById(patientId); // get the existing patient record
+        if (patient == null) {
+            throw new ResourceNotFoundException("Patient does not exist");
+        }
+
         MedicalRecord existingMedicalRecord = medicalRecordDAO.getMedicalRecordByPatientId(patientId); // check if patient already has a medical record
 
         if (existingMedicalRecord != null) {
@@ -297,9 +317,16 @@ public class PatientResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPatientAppointments(@PathParam("patientId") int patientId) {
         LOGGER.info("Searching for appointments of patient with ID: " + patientId);
+
+        // Validate if the patient exists
+        Patient patient = patientDAO.getPatientById(patientId); // get the existing patient record
+        if (patient == null) {
+            throw new ResourceNotFoundException("Patient does not exist");
+        }
+
         List<Appointment> existingAppointments = appointmentDAO.getAppointmentByPatientId(patientId); // get patients appointments
 
-        if (existingAppointments != null) {
+        if (!existingAppointments.isEmpty()) {
             return Response.ok().entity(existingAppointments).build();
         } else {
             throw new ResourceNotFoundException("Patient with ID " + patientId + " does not have any appointments");
@@ -319,9 +346,16 @@ public class PatientResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPatientPrescriptions(@PathParam("patientId") int patientId) {
         LOGGER.info("Searching for prescriptions of patient with ID: " + patientId);
+
+        // Validate if the patient exists
+        Patient patient = patientDAO.getPatientById(patientId); // get the existing patient record
+        if (patient == null) {
+            throw new ResourceNotFoundException("Patient does not exist");
+        }
+
         List<Prescription> existingPrescriptions = prescriptionDAO.getPrescriptionByPatientId(patientId); // get patients prescriptions
 
-        if (existingPrescriptions != null) {
+        if (!existingPrescriptions.isEmpty()) {
             return Response.ok().entity(existingPrescriptions).build();
         } else {
             throw new ResourceNotFoundException("Patient with ID " + patientId + " does not have any prescriptions");
@@ -340,9 +374,16 @@ public class PatientResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getPatientBills(@PathParam("patientId") int patientId) {
         LOGGER.info("Searching for bills of patient with ID: " + patientId);
+
+        // Validate if the patient exists
+        Patient patient = patientDAO.getPatientById(patientId); // get the existing patient record
+        if (patient == null) {
+            throw new ResourceNotFoundException("Patient does not exist");
+        }
+
         List<Billing> existingBills = billingDAO.getBillByPatientId(patientId); // get patients bills
 
-        if (existingBills != null) {
+        if (!existingBills.isEmpty()) {
             return Response.ok().entity(existingBills).build();
         } else {
             throw new ResourceNotFoundException("Patient with ID " + patientId + " does not have any bills");
@@ -350,87 +391,13 @@ public class PatientResource {
     }
 
     /**
-     * Adds a medical record for a patient with the specified ID.
      *
-     * @param patientId The ID of the patient for whom the medical record is
-     * being added.
-     * @param medicalRecord The medical record to be added.
-     * @return Response indicating the status of the operation.
-     * @throws ResourceNotFoundException if the patient is not found.
-     */
-    @POST
-    @Path("/{patientId}/medical-records")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response addPatientMedicalRecord(@PathParam("patientId") int patientId, MedicalRecord medicalRecord) {
-        if (medicalRecord == null) {
-            throw new BadRequestException("Medical record cannot be null");
-        }
-
-        LOGGER.info("Searching for patient with ID: " + patientId);
-        Patient existingPatient = patientDAO.getPatientById(patientId); // check if the patient exists
-
-        LOGGER.info("Searching for medical record of patient with ID: " + patientId);
-        MedicalRecord existingMedicalRecord = medicalRecordDAO.getMedicalRecordByPatientId(patientId); // check if patient already has a medical record
-
-        if (existingPatient != null && existingMedicalRecord == null) {
-            LOGGER.info("Adding a new medical record");
-            medicalRecord.setPatient(existingPatient);
-
-            // Validate the medical record object
-            String validationError = ValidationHelper.validate(medicalRecord);
-            if (validationError != null) {
-                return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
-            }
-
-            int newMedicalRecordId = medicalRecordDAO.addMedicalRecord(medicalRecord);
-            return Response.status(Response.Status.CREATED).entity("New medical record with ID: " + newMedicalRecordId + " was added successfully").build();
-        } else if (existingPatient == null) {
-            throw new ResourceNotFoundException("Patient with ID " + patientId + " was not found");
-        } else {
-            String message = "Patient with ID " + patientId + " already has a medical record";
-            return Response.ok().entity(message).build();
-        }
-    }
-
-    /**
-     * Updates the medical record of a patient with the specified ID.
+     * Creates a Person object from a Patient object.
      *
-     * @param patientId The ID of the patient whose medical record is being
-     * updated.
-     * @param updatedMedicalRecord The updated medical record.
-     * @return Response indicating the status of the operation.
-     * @throws ResourceNotFoundException if the patient or the medical record is
-     * not found.
+     * @param patient The Patient object from which to create the Person object.
+     * @return A Person object with the same first name, last name, address,
+     * age, contact number, and gender as the Patient object.
      */
-    @PUT
-    @Path("/{patientId}/medical-records")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response updatePatientMedicalRecord(@PathParam("patientId") int patientId, MedicalRecord updatedMedicalRecord) {
-
-        Patient existingPatient = patientDAO.getPatientById(patientId); // check if the patient exists
-        MedicalRecord existingMedicalRecord = medicalRecordDAO.getMedicalRecordByPatientId(patientId); // check if patient already has a medical record
-
-        if (existingPatient != null && existingMedicalRecord != null) {
-            if (updatedMedicalRecord.getMedicalRecordId() != existingMedicalRecord.getMedicalRecordId()) {
-                LOGGER.info("URL parameter medical record ID and the passed medical record ID do not match");
-                return Response.status(Response.Status.CONFLICT).entity("IDs are immutable. The passed medical record IDs do not match").build();
-            }
-            updatedMedicalRecord.setPatient(existingPatient); //set the patient details in the medical record
-
-            // Validate the medical record object
-            String validationError = ValidationHelper.validate(updatedMedicalRecord);
-            if (validationError != null) {
-                return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
-            }
-
-            medicalRecordDAO.updateMedicalRecord(updatedMedicalRecord); //update the patients medical record
-            String message = "Medical record of the  " + patientId + " was successfully updated";
-            return Response.ok().entity(message).build(); // return a message indicating success
-        } else {
-            throw new ResourceNotFoundException("Patient with ID " + patientId + " was not found");
-        }
-    }
-    
     private Person createPerson(Patient patient) {
         Person person = new Person();
         person.setFirstName(patient.getFirstName());
@@ -439,7 +406,7 @@ public class PatientResource {
         person.setAge(patient.getAge());
         person.setContactNo(patient.getContactNo());
         person.setGender(patient.getGender());
-        
+
         return person;
     }
 }

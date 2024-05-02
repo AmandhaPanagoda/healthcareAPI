@@ -26,7 +26,7 @@ public class PersonDAO {
     private static final Map<Integer, Person> people = new HashMap<>();
 
     static {
-        people.put(1, new Person(1, "Eric", "Anderson", 1234548548, "684 Delaware Avenue, SF", "M", 45));
+        people.put(1, new Person(1, "Eric", "Anderson", 1124579548, "684 Delaware Avenue, SF", "M", 45));
         people.put(2, new Person(2, "Abigail", "Henderson", 1124579548, "2075 Elliott Street, NH", "F", 33));
         people.put(3, new Person(3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60));
         people.put(4, new Person(4, "Alice", "Smith", 1234567890, "123 Main St, Anytown, USA", "F", 25));

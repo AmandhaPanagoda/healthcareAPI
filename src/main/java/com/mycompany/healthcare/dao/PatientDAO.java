@@ -4,7 +4,6 @@
  */
 package com.mycompany.healthcare.dao;
 
-import com.mycompany.healthcare.helper.Helper;
 import com.mycompany.healthcare.helper.ObjectPatcherHelper;
 import com.mycompany.healthcare.model.Patient;
 import java.util.ArrayList;
@@ -61,9 +60,12 @@ public class PatientDAO {
      *
      */
     public void addPatient(Patient patient) {
-        LOGGER.info("Adding a new patient");
-        patients.put(patient.getPersonId(), patient);
-        LOGGER.info("New patient with ID " + patient.getPersonId() + " was added to patient list");
+        try {
+            patients.put(patient.getPersonId(), patient);
+            LOGGER.info("New patient with ID {} was added to patients list", patient.getPersonId());
+        } catch (Exception e) {
+            LOGGER.error("Error adding patient: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -72,12 +74,11 @@ public class PatientDAO {
      * @param updatedPatient The updated patient information.
      */
     public void updatePatient(Patient updatedPatient) {
-        LOGGER.info("Update patient record");
-
-        Patient existingPatient = patients.get(updatedPatient.getPersonId());
-        if (existingPatient != null) {
+        try {
             patients.put(updatedPatient.getPersonId(), updatedPatient);
             LOGGER.info("Patient record was updated. Patient ID : " + updatedPatient.getPersonId());
+        } catch (Exception e) {
+            LOGGER.error("Patient ID: " + updatedPatient.getPersonId() + ". Error updating patient: " + e.getMessage(), e);
         }
     }
 
@@ -105,8 +106,19 @@ public class PatientDAO {
      * @return True if the patient was successfully deleted, false otherwise.
      */
     public boolean deletePatient(int patientId) {
-        LOGGER.info("Deleting the patient with ID: " + patientId);
-        return patients.remove(patientId) != null;
+        try {
+            Patient removedPatient = patients.remove(patientId);
+            if (removedPatient != null) {
+                LOGGER.info("Patient with ID {} was successfully deleted", patientId);
+                return true;
+            } else {
+                LOGGER.info("Patient with ID {} was not found", patientId);
+                return false;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error deleting Patient with ID {}: {}", patientId, e.getMessage());
+            return false;
+        }
     }
 
     /**
@@ -131,7 +143,7 @@ public class PatientDAO {
             boolean matchGender = gender == null || gender.equalsIgnoreCase(patient.getGender());
 
             if (matchFirstName && matchLastName && matchAge && matchGender) {
-                matchingPatients.add(patient);
+                matchingPatients.add(patient); // add the matching patient record to the list
             }
         }
         return matchingPatients;
