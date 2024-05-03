@@ -27,7 +27,10 @@ import com.mycompany.healthcare.dao.PersonDAO;
 import com.mycompany.healthcare.exception.ModelIdMismatchException;
 import com.mycompany.healthcare.exception.ResourceNotFoundException;
 import com.mycompany.healthcare.helper.ValidationHelper;
+import com.mycompany.healthcare.model.Doctor;
+import com.mycompany.healthcare.model.Patient;
 import javax.ws.rs.PATCH;
+import org.modelmapper.ModelMapper;
 
 /**
  * RESTful web service resource for managing people. This resource provides
@@ -52,12 +55,11 @@ public class PersonResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Collection<Person> getAllPeople() {
-        LOGGER.info("Fetching all person records");
         if (!personDAO.getAllPeople().isEmpty()) {
+            LOGGER.info("Fetching all person records");
             return personDAO.getAllPeople().values();
         } else {
-            LOGGER.info("No records were found");
-            throw new ResourceNotFoundException("No records were found");
+            throw new ResourceNotFoundException("No people records were found");
         }
     }
 
@@ -73,9 +75,9 @@ public class PersonResource {
     @Path("/{personId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Person getPersonById(@PathParam("personId") int personId) {
-        LOGGER.info("Getting the person by ID: " + personId);
         Person person = personDAO.getPersonById(personId);
         if (person != null) {
+            LOGGER.info("Getting the person by ID: " + personId);
             return person;
         } else {
             throw new ResourceNotFoundException("Person with ID " + personId + " was not found");
@@ -97,7 +99,6 @@ public class PersonResource {
         if (person == null) {
             throw new BadRequestException("Person record cannot be null");
         }
-        LOGGER.info("Adding a new person");
 
         // Validate the person object
         String validationError = ValidationHelper.validate(person);
@@ -106,7 +107,11 @@ public class PersonResource {
         }
 
         int newPersonId = personDAO.addPerson(person); // add the new person and get new person id
-        return Response.status(Response.Status.CREATED).entity("New person with ID: " + newPersonId + " was added successfully").build();
+
+        if (newPersonId != -1) {
+            return Response.status(Response.Status.CREATED).entity("New person with ID: " + newPersonId + " was added successfully").build();
+        }
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An unexpected error occured when adding the person").build();
     }
 
     /**
@@ -124,25 +129,42 @@ public class PersonResource {
     @Path("/{personId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updatePerson(@PathParam("personId") int personId, Person updatedPerson) {
+        if (updatedPerson == null) {
+            LOGGER.error("Person object cannot be null");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Person cannot be null").build();
+        }
+
         if (personId != updatedPerson.getPersonId()) {
-            LOGGER.info("URL parameter person ID and the passed person ID do not match");
             throw new ModelIdMismatchException("The passed person IDs do not match");
         }
-        LOGGER.info("Updating person with ID: " + personId);
-        Person existingPerson = personDAO.getPersonById(personId);
-        
-         // Validate the person object
+
+        // Validate the person object
         String validationError = ValidationHelper.validate(updatedPerson);
         if (validationError != null) {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
-        
+
+        Person existingPerson = personDAO.getPersonById(personId); // get existing person record
+
         if (existingPerson != null) {
-            personDAO.updatePerson(updatedPerson);
+            Doctor doctor = doctorDAO.getDoctorById(personId); 
+            Patient patient = patientDAO.getPatientById(personId);
+            
+            ModelMapper modelMapper = new ModelMapper(); // create a mapper
+            if (patient != null) {
+                Patient partialUpdatedPatient = modelMapper.map(updatedPerson, Patient.class);
+                patientDAO.partialUpdatePatient(patient,partialUpdatedPatient); // update the patient record
+            }
+            if (doctor != null) {
+                Doctor partialUpdatedDoctor = modelMapper.map(updatedPerson, Doctor.class);
+                doctorDAO.partialUpdateDoctor(doctor, partialUpdatedDoctor); // update the doctor record
+            }
+            
+            personDAO.updatePerson(updatedPerson); // update the person record
+
             LOGGER.info("Person record was updated. Updated Person ID: " + personId);
             return Response.status(Response.Status.OK).entity("Person with ID " + personId + " was updated successfully").build();
         } else {
-            LOGGER.error("Person ID" + personId + " was not found");
             throw new ResourceNotFoundException("Person with ID " + personId + " was not found");
         }
     }
@@ -159,17 +181,35 @@ public class PersonResource {
     @Path("/{personId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response partialUpdatePerson(@PathParam("personId") int personId, Person partialUpdatedPerson) {
-        if (partialUpdatedPerson.getPersonId() != 0 && personId != partialUpdatedPerson.getPersonId()) {
-            LOGGER.info("URL parameter person ID and the passed person ID do not match");
+        if (partialUpdatedPerson == null) {
+            LOGGER.error("Person object cannot be null");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Person cannot be null").build();
+        }
+
+        if (personId != partialUpdatedPerson.getPersonId()) {
             throw new ModelIdMismatchException("The passed person IDs do not match");
         }
 
+        // Get the existing patient record
         Person existingPerson = personDAO.getPersonById(personId);
+
         if (existingPerson != null) {
-            personDAO.partialUpdatePerson(existingPerson, partialUpdatedPerson);
+            Doctor doctor = doctorDAO.getDoctorById(personId);
+            Patient patient = patientDAO.getPatientById(personId);
+
+            ModelMapper modelMapper = new ModelMapper(); // create a mapper
+            personDAO.partialUpdatePerson(existingPerson, partialUpdatedPerson); // update the person record
+            if (patient != null) {
+                Patient partialUpdatedPatient = modelMapper.map(partialUpdatedPerson, Patient.class);
+                patientDAO.partialUpdatePatient(patient,partialUpdatedPatient); // update the patient record
+            }
+            if (doctor != null) {
+                Doctor partialUpdatedDoctor = modelMapper.map(partialUpdatedPerson, Doctor.class);
+                doctorDAO.partialUpdateDoctor(doctor,partialUpdatedDoctor); // update the doctor record
+            }
+            
             return Response.status(Response.Status.OK).entity("Person with ID " + personId + " was updated successfully").build();
         } else {
-            LOGGER.error("Person ID" + personId + " was not found");
             throw new ResourceNotFoundException("Person with ID " + personId + " was not found");
         }
     }
@@ -185,10 +225,11 @@ public class PersonResource {
     @DELETE
     @Path("/{personId}")
     public Response deletePerson(@PathParam("personId") int personId) {
-        patientDAO.deletePatient(personId);
-        doctorDAO.deleteDoctor(personId);
-        boolean removed = personDAO.deletePerson(personId);
+        patientDAO.deletePatient(personId); // delete the patient record from patients if it exists
+        doctorDAO.deleteDoctor(personId); // delete the doctor record from doctors if it exists
         
+        boolean removed = personDAO.deletePerson(personId);
+
         if (removed) {
             return Response.status(Response.Status.OK).entity("Person with ID " + personId + " was deleted successfully").build();
         } else {

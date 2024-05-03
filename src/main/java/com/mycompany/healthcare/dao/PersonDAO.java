@@ -62,15 +62,18 @@ public class PersonDAO {
      * @return The ID of the newly added person.
      */
     public int addPerson(Person person) {
-        LOGGER.info("Adding a new person");
+        try {
+            Helper<Person> helper = new Helper<>();
+            int newPersonId = helper.getNextId(people); // Get new person ID
+            person.setPersonId(newPersonId); // Set the new person ID
 
-        Helper<Person> helper = new Helper<>();
-        int newPersonId = helper.getNextId(people); // Get new person ID
-
-        person.setPersonId(newPersonId); // Set the new person ID
-        people.put(newPersonId, person);
-        LOGGER.info("New person with ID " + newPersonId + " was added to people list");
-        return newPersonId;
+            people.put(newPersonId, person);
+            LOGGER.info("New person with ID " + newPersonId + " was added to people list");
+            return newPersonId;
+        } catch (Exception e) {
+            LOGGER.error("Error adding person: " + e.getMessage(), e);
+            return -1;
+        }
     }
 
     /**
@@ -79,15 +82,13 @@ public class PersonDAO {
      * @param updatedPerson The updated Person object.
      */
     public void updatePerson(Person updatedPerson) {
-        LOGGER.info("Updating person record");
-
-        Person existingPerson = people.get(updatedPerson.getPersonId());
-        if (existingPerson != null) {
+        try {
             people.put(updatedPerson.getPersonId(), updatedPerson);
-            LOGGER.info("Person ID : " + updatedPerson.getPersonId() + " was updated");
-        } else {
-            LOGGER.info("Person record was not updated! Person ID : " + updatedPerson.getPersonId() + " was not found");
+            LOGGER.info("Person was updated. Person ID : " + updatedPerson.getPersonId());
+        } catch (Exception e) {
+            LOGGER.error("Person ID: " + updatedPerson.getPersonId()+ ". Error updating person: " + e.getMessage(), e);
         }
+
     }
 
     /**
@@ -115,8 +116,19 @@ public class PersonDAO {
      * @return True if the person was successfully deleted, false otherwise.
      */
     public boolean deletePerson(int personId) {
-        LOGGER.info("Deleting the person with ID: " + personId);
-        return people.remove(personId) != null;
+        try {
+            Person removedPerson = people.remove(personId);
+            if (removedPerson != null) {
+                LOGGER.info("Person with ID {} was successfully deleted", personId);
+                return true;
+            } else {
+                LOGGER.info("Person with ID {} was not found", personId);
+                return false;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error deleting Person with ID {}: {}", personId, e.getMessage());
+            return false;
+        }
     }
 
     /**
@@ -146,7 +158,7 @@ public class PersonDAO {
             boolean matchGender = gender == null || gender.equalsIgnoreCase(person.getGender());
 
             if (matchFirstName && matchLastName && matchAge && matchGender) {
-                matchingPeople.add(person);
+                matchingPeople.add(person); // add the matching record to the list
             }
         }
         return matchingPeople;
