@@ -8,13 +8,18 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
 import java.util.StringTokenizer;
-import javax.servlet.ServletRequest;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 
 /**
+ * This class implements a JAX-RS ContainerRequestFilter to perform basic
+ * authentication for certain endpoints related to medical records, bills, and
+ * prescriptions. It checks the Authorization header for a Basic authentication
+ * token, decodes it, and validates the username and password. If the
+ * credentials are valid, the request is allowed to proceed; otherwise, an
+ * unauthorized response is returned.
  *
  * @author Amandha
  */
@@ -29,8 +34,8 @@ public class SecurityFilter implements ContainerRequestFilter {
         boolean medicalRecords = requestContext.getUriInfo().getPath().contains("medical-records");
         boolean bills = requestContext.getUriInfo().getPath().contains("bills");
         boolean prescriptions = requestContext.getUriInfo().getPath().contains("prescriptions");
-        
-        if (medicalRecords || bills || prescriptions) {
+
+        if (medicalRecords || bills || prescriptions) { // authentication will apply for these endpoints
             List<String> authHeader = requestContext.getHeaders().get(AUTHORIZATION_HEADER_KEY);
             if (authHeader != null && !authHeader.isEmpty()) {
                 String authToken = authHeader.get(0);

@@ -31,7 +31,7 @@ public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
         if (exception instanceof NotAllowedException) {
             LOGGER.error("Method not allowed: " + exception.getMessage());
             return Response.status(Response.Status.METHOD_NOT_ALLOWED)
-                    .entity("Sorry, this action is not allowed. Error: " + exception.getMessage())
+                    .entity("This action is not allowed. Error: " + exception.getMessage())
                     .build();
         } 
         // Handling NotFoundException
@@ -52,7 +52,7 @@ public class GenericExceptionMapper implements ExceptionMapper<Throwable> {
         else if (exception instanceof BadRequestException) {
             LOGGER.error("Bad request: " + exception.getMessage());
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Sorry, there was an error in your request. Error: " + exception.getMessage())
+                    .entity("There was an error in your request. Error: " + exception.getMessage())
                     .build();
         } 
         // Handling NullPointerException
