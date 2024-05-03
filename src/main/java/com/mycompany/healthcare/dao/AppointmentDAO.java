@@ -145,12 +145,17 @@ public class AppointmentDAO {
      * false.
      */
     public boolean deleteAppointment(int appointmentId) {
-        Appointment removedAppointment = appointments.remove(appointmentId);
-        if (removedAppointment != null) {
-            LOGGER.info("Appointment with ID {} was successfully deleted", appointmentId);
-            return true;
-        } else {
-            LOGGER.info("Appointment with ID {} was not found", appointmentId);
+        try {
+            Appointment removedAppointment = appointments.remove(appointmentId);
+            if (removedAppointment != null) {
+                LOGGER.info("Appointment with ID {} was successfully deleted", appointmentId);
+                return true;
+            } else {
+                LOGGER.info("Appointment with ID {} was not found", appointmentId);
+                return false;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error deleting Appointment with ID {}: {}", appointmentId, e.getMessage());
             return false;
         }
     }

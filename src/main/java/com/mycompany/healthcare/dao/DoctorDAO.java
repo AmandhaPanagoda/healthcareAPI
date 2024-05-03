@@ -4,10 +4,8 @@
  */
 package com.mycompany.healthcare.dao;
 
-import com.mycompany.healthcare.helper.Helper;
 import com.mycompany.healthcare.helper.ObjectPatcherHelper;
 import com.mycompany.healthcare.model.Doctor;
-import com.mycompany.healthcare.dao.PersonDAO;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,11 +49,7 @@ public class DoctorDAO {
      */
     public Doctor getDoctorById(int doctorId) {
         LOGGER.info("Retrieving doctor by ID: {}", doctorId);
-        Doctor doctor = doctors.get(doctorId);
-        if (doctor == null) {
-            LOGGER.info("Doctor with ID {} was not found", doctorId);
-        }
-        return doctor;
+        return doctors.get(doctorId);
     }
 
     /**
@@ -64,8 +58,12 @@ public class DoctorDAO {
      * @param doctor The doctor object to add.
      */
     public void addDoctor(Doctor doctor) {
-        LOGGER.info("Adding a new doctor");
-        doctors.put(doctor.getPersonId(), doctor);
+        try {
+            doctors.put(doctor.getPersonId(), doctor);
+            LOGGER.info("New doctor with ID {} was added to doctors list", doctor.getPersonId());
+        } catch (Exception e) {
+            LOGGER.error("Error adding doctor: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -74,13 +72,11 @@ public class DoctorDAO {
      * @param updatedDoctor The updated doctor object.
      */
     public void updateDoctor(Doctor updatedDoctor) {
-        LOGGER.info("Updating doctor record");
-        Doctor existingDoctor = doctors.get(updatedDoctor.getPersonId());
-        if (existingDoctor != null) {
+        try {
             doctors.put(updatedDoctor.getPersonId(), updatedDoctor);
-            LOGGER.info("Doctor record was updated.ID : {}", updatedDoctor.getPersonId());
-        } else {
-            LOGGER.info("Doctor record with ID {} was not found", updatedDoctor.getPersonId());
+            LOGGER.info("Doctor record was updated. Doctor ID : " + updatedDoctor.getPersonId());
+        } catch (Exception e) {
+            LOGGER.error("Doctor ID: " + updatedDoctor.getPersonId() + ". Error updating doctor: " + e.getMessage(), e);
         }
     }
 
@@ -108,13 +104,17 @@ public class DoctorDAO {
      * @return True if the doctor was successfully deleted, otherwise false.
      */
     public boolean deleteDoctor(int doctorId) {
-        LOGGER.info("Deleting the doctor with ID: {}", doctorId);
-        Doctor removedDoctor = doctors.remove(doctorId);
-        if (removedDoctor != null) {
-            LOGGER.info("Doctor record with ID {} was deleted", doctorId);
-            return true;
-        } else {
-            LOGGER.info("Doctor record with ID {} was not found", doctorId);
+        try {
+            Doctor removedDoctor = doctors.remove(doctorId);
+            if (removedDoctor != null) {
+                LOGGER.info("Doctor with ID {} was successfully deleted", doctorId);
+                return true;
+            } else {
+                LOGGER.info("Doctor with ID {} was not found", doctorId);
+                return false;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error deleting Doctor with ID {}: {}", doctorId, e.getMessage());
             return false;
         }
     }
