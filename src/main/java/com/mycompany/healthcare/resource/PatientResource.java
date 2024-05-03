@@ -119,7 +119,7 @@ public class PatientResource {
 
         if (newPatientId != -1) {
             patient.setPersonId(newPatientId); // set the new person ID of the patient
-            patientDAO.addPatient(patient); // add the new patient to the patients list and get new patient id
+            patientDAO.addPatient(patient); // add the new patient to the patients list 
 
             return Response.status(Response.Status.CREATED).entity("New patient with ID: " + newPatientId + " was added successfully").build();
         }

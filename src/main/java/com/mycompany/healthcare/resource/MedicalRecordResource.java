@@ -133,6 +133,7 @@ public class MedicalRecordResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addMedicalRecord(MedicalRecord medicalRecord) {
         if (medicalRecord == null) {
+            LOGGER.error("Medical Record object cannot be null");
             throw new BadRequestException("Medical Record cannot be null");
         }
 

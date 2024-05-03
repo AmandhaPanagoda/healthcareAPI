@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Amandha
  */
-@Path("bills")
+@Path("/bills")
 public class BillingResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BillingResource.class);

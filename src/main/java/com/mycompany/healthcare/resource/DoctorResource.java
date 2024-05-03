@@ -59,12 +59,12 @@ public class DoctorResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Collection<Doctor> getAllDoctors() {
-        LOGGER.info("Fetching all doctor records");
         if (!doctorDAO.getAllDoctors().isEmpty()) {
+            LOGGER.info("Returning all doctor records");
             return doctorDAO.getAllDoctors().values();
         } else {
-            LOGGER.info("No records were found");
-            throw new ResourceNotFoundException("No records of doctors were found");
+            LOGGER.info("No doctor records were found");
+            throw new ResourceNotFoundException("No doctor records were found");
         }
     }
 
@@ -78,9 +78,9 @@ public class DoctorResource {
     @Path("/{doctorId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Person getDoctorById(@PathParam("doctorId") int doctorId) {
-        LOGGER.info("Getting the doctor by ID: " + doctorId);
         Doctor doctor = doctorDAO.getDoctorById(doctorId);
         if (doctor != null) {
+            LOGGER.info("Getting the doctor by ID: " + doctorId);
             return doctor;
         } else {
             throw new ResourceNotFoundException("Doctor with ID " + doctorId + " was not found");
@@ -97,9 +97,9 @@ public class DoctorResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addDoctor(Doctor doctor) {
         if (doctor == null) {
+            LOGGER.error("Doctor object cannot be null");
             throw new BadRequestException("Doctor record cannot be null");
         }
-        LOGGER.info("Adding a new doctor");
 
         // Validate the doctor object
         String validationError = ValidationHelper.validate(doctor);
@@ -107,12 +107,16 @@ public class DoctorResource {
             return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
         }
 
-        Person person = createPerson(doctor);
+        Person person = createPerson(doctor); // create a person object
         int newDoctorId = personDAO.addPerson(person); // add the doctor to the person list
-        doctor.setPersonId(newDoctorId);
-        doctorDAO.addDoctor(doctor); // add the new doctor and get the new doctor id
 
-        return Response.status(Response.Status.CREATED).entity("New doctor with ID: " + newDoctorId + " was added successfully").build();
+        if (newDoctorId != -1) {
+            doctor.setPersonId(newDoctorId); // set the new person ID of the doctor
+            doctorDAO.addDoctor(doctor); // add the new doctor to doctor list
+
+            return Response.status(Response.Status.CREATED).entity("New doctor with ID: " + newDoctorId + " was added successfully").build();
+        }
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An unexpected error occured when adding the doctor").build();
     }
 
     /**
@@ -126,33 +130,34 @@ public class DoctorResource {
     @Path("/{doctorId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateDoctor(@PathParam("doctorId") int doctorId, Doctor updatedDoctor) {
-        if (doctorId != updatedDoctor.getPersonId()) {
-            LOGGER.info("URL parameter doctor ID and the passed doctor ID do not match");
-            return Response.status(Response.Status.CONFLICT).entity("The passed doctor IDs do not match").build();
+        if (updatedDoctor == null) {
+            LOGGER.error("Doctor object cannot be null");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Doctor record cannot be null").build();
         }
 
-        LOGGER.info("Updating doctor with ID: " + doctorId);
+        if (doctorId != updatedDoctor.getPersonId()) {// IDs are immutable when updating
+            throw new ModelIdMismatchException("The passed doctor IDs do not match");
+        }
+
+        // Validate the doctor object
+        String validationError = ValidationHelper.validate(updatedDoctor);
+        if (validationError != null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
+        }
+
+        // get the existing doctor record
         Doctor existingDoctor = doctorDAO.getDoctorById(doctorId);
 
-        if (existingDoctor == null) {
-            LOGGER.error("Doctor ID" + doctorId + " was not found");
-            throw new ResourceNotFoundException("Error in updating! Doctor with ID " + doctorId + " was not found");
+        if (existingDoctor != null) {
+            Person updatedPerson = createPerson(updatedDoctor); // create a person object
+            updatedPerson.setPersonId(doctorId); // set the person id of the person object
+            doctorDAO.updateDoctor(updatedDoctor); // update the patient record
+            personDAO.updatePerson(updatedPerson); // update the person record
 
-        } else {
-            String validationError = ValidationHelper.validate(updatedDoctor);
-            if (validationError != null) {
-                return Response.status(Response.Status.BAD_REQUEST).entity(validationError).build();
-            }
-
-            doctorDAO.updateDoctor(updatedDoctor); // update the doctor record
-            
-            Person person = createPerson(updatedDoctor);
-            person.setPersonId(updatedDoctor.getPersonId());
-            personDAO.updatePerson(person); // update the person record
-            
             LOGGER.info("Doctor record was updated. Updated Doctor ID: " + doctorId);
-
             return Response.status(Response.Status.OK).entity("Doctor with ID " + doctorId + " was updated successfully").build();
+        } else {
+            throw new ResourceNotFoundException("Doctor with ID " + doctorId + " was not found");
         }
     }
 
@@ -169,20 +174,28 @@ public class DoctorResource {
     @Path("/{doctorId}")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response partialUpdateDoctor(@PathParam("doctorId") int doctorId, Doctor partialUpdatedDoctor) {
-        if (partialUpdatedDoctor.getPersonId() != 0 && doctorId != partialUpdatedDoctor.getPersonId()) {
-            LOGGER.info("URL parameter doctor ID and the passed doctor ID do not match");
+        if (partialUpdatedDoctor == null) {
+            LOGGER.error("Doctor object cannot be null");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Doctor record cannot be null").build();
+        }
+
+        if (doctorId != partialUpdatedDoctor.getPersonId()) {
             throw new ModelIdMismatchException("The passed doctor IDs do not match");
         }
 
+        // get existing doctor record
         Doctor existingDoctor = doctorDAO.getDoctorById(doctorId);
-        Person existingPerson = personDAO.getPersonById(doctorId);
+
         if (existingDoctor != null) {
-            doctorDAO.partialUpdateDoctor(existingDoctor, partialUpdatedDoctor);
-            personDAO.partialUpdatePerson(existingPerson, partialUpdatedDoctor);
-            
+            Person existingPerson = personDAO.getPersonById(doctorId); // get existing person record
+            Person partialUpdatedPerson = createPerson(partialUpdatedDoctor); // create a person object
+            partialUpdatedPerson.setPersonId(doctorId); // set the ID of the person
+
+            doctorDAO.partialUpdateDoctor(existingDoctor, partialUpdatedDoctor); // update the doctor record
+            personDAO.partialUpdatePerson(existingPerson, partialUpdatedPerson); // update the person record
+
             return Response.status(Response.Status.OK).entity("Doctor with ID " + doctorId + " was updated successfully").build();
         } else {
-            LOGGER.error("Doctor ID" + doctorId + " was not found");
             throw new ResourceNotFoundException("Doctor with ID " + doctorId + " was not found");
         }
     }
@@ -196,7 +209,7 @@ public class DoctorResource {
     @DELETE
     @Path("/{doctorId}")
     public Response deleteDoctor(@PathParam("doctorId") int doctorId) {
-        boolean removed = doctorDAO.deleteDoctor(doctorId);
+        boolean removed = doctorDAO.deleteDoctor(doctorId); // delete doctor record
         if (removed) {
             return Response.status(Response.Status.OK).entity("Doctor with ID " + doctorId + " was deleted successfully").build();
         } else {
@@ -265,6 +278,13 @@ public class DoctorResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDoctorAppointments(@PathParam("doctorId") int doctorId) {
         LOGGER.info("Searching for appointments of doctor with ID: " + doctorId);
+
+        // Validate if the doctor exists
+        Doctor doctor = doctorDAO.getDoctorById(doctorId); // get the existing doctor record
+        if (doctor == null) {
+            throw new ResourceNotFoundException("Doctor does not exist");
+        }
+
         List<Appointment> existingAppointments = appointmentDAO.getAppointmentByDoctorId(doctorId); // get doctors appointments
 
         if (!existingAppointments.isEmpty()) {
@@ -287,6 +307,13 @@ public class DoctorResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDoctorPrescriptions(@PathParam("doctorId") int doctorId) {
         LOGGER.info("Searching for prescriptions of doctor with ID: " + doctorId);
+
+        // Validate if the doctor exists
+        Doctor doctor = doctorDAO.getDoctorById(doctorId); // get the existing doctor record
+        if (doctor == null) {
+            throw new ResourceNotFoundException("Doctor does not exist");
+        }
+
         List<Prescription> existingPrescriptions = prescriptionDAO.getPrescriptionByDoctorId(doctorId); // get prescriptions created by the doctor
 
         if (!existingPrescriptions.isEmpty()) {
@@ -296,6 +323,14 @@ public class DoctorResource {
         }
     }
 
+    /**
+     *
+     * Creates a Person object from a Patient object.
+     *
+     * @param patient The Patient object from which to create the Person object.
+     * @return A Person object with the same first name, last name, address,
+     * age, contact number, and gender as the Patient object.
+     */
     private Person createPerson(Doctor doctor) {
         Person person = new Person();
         person.setFirstName(doctor.getFirstName());
@@ -304,7 +339,7 @@ public class DoctorResource {
         person.setAge(doctor.getAge());
         person.setContactNo(doctor.getContactNo());
         person.setGender(doctor.getGender());
-        
+
         return person;
     }
 
