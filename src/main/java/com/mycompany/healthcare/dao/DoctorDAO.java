@@ -22,13 +22,17 @@ import org.slf4j.LoggerFactory;
 public class DoctorDAO {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DoctorDAO.class);
-    private static PersonDAO personDAO = new PersonDAO();
     private static final Map<Integer, Doctor> doctors = new HashMap<>();
 
     // Static block to initialize some sample doctor records
     static {
-        doctors.put(1, new Doctor("Cardiologist", 1, "Eric", "Anderson", 1234548548, "684 Delaware Avenue, SF", "M", 45));
-        doctors.put(2, new Doctor("Neurologist", 2, "Abigail", "Henderson", 1124579548, "2075 Elliott Street, NH", "F", 33));
+        Doctor doctor1 = new Doctor("Anesthesiologist", 1, "Eric", "Anderson", 1124579548, "684 Delaware Avenue, SF", "M", 45);
+        Doctor doctor2 = new Doctor("Cardiologist", 2, "Abigail", "Henderson", 1124579548, "2075 Elliott Street, NH", "F", 33);
+        Doctor doctor3 = new Doctor("Neurologist", 9, "Henry", "Garcia", 1654321876, "901 Cedar Blvd, Anywhere, USA", "M", 50);
+
+        doctors.put(1, doctor1);
+        doctors.put(2, doctor2);
+        doctors.put(9, doctor3);
     }
 
     /**

@@ -24,12 +24,20 @@ public class PatientDAO {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PatientDAO.class);
     private static final Map<Integer, Patient> patients = new HashMap<>();
-
+    
+    // Initialize some sample data
     static {
-        patients.put(3, new Patient(3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory"));
-        patients.put(4, new Patient(4, "Alice", "Smith", 1234567890, "123 Main St, Anytown, USA", "F", 25, "Healthy", "No significant medical history"));
-        patients.put(5, new Patient(5, "Bob", "Johnson", 1876543210, "456 Elm St, Othertown, USA", "M", 35, "Diagnosed with diabetes", "Regularly monitored for blood sugar levels"));
-        patients.put(6, new Patient(6, "Charlie", "Brown", 1551234567, "789 Oak St, Anotherplace, USA", "M", 45, "Recovering from surgery", "Underwent appendectomy last month"));
+        Patient patient1 = new Patient(3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
+        Patient patient2 = new Patient(4, "Alice", "Smith", 1234567890, "123 Main St, Anytown, USA", "F", 25, "Healthy", "No significant medical history");
+        Patient patient3 = new Patient(5, "Bob", "Johnson", 1876543210, "456 Elm St, Othertown, USA", "M", 15, "Mild allergies", "No major illnesses");
+        Patient patient4 = new Patient(6, "Charlie", "Brown", 1551234567, "789 Oak St, Anotherplace, USA", "M", 45, "High blood pressure", "Previous surgery for appendicitis");
+        Patient patient5 = new Patient(8, "Grace", "Lee", 1765432987, "890 Maple Ave, Nowhere, USA", "F", 40, "Type 2 diabetes", "Family history of heart disease");
+        
+        patients.put(3, patient1);
+        patients.put(4, patient2);
+        patients.put(5, patient3);
+        patients.put(6, patient4);
+        patients.put(8, patient5);
     }
 
     /**

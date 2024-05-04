@@ -32,12 +32,17 @@ public class PrescriptionDAO {
     private static final Map<Integer, Prescription> prescriptions = new HashMap<>();
 
     static {
-        Patient patient = new Patient(3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
-        Doctor doctor = new Doctor("Neurologist", 2, "Abigail", "Henderson", 1124579548, "2075 Elliott Street, NH", "F", 33);
+        Patient patient1 = new Patient(3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
+        Patient patient2 = new Patient(4, "Alice", "Smith", 1234567890, "123 Main St, Anytown, USA", "F", 25, "Healthy", "No significant medical history");
 
-        prescriptions.put(1, new Prescription(1, patient, doctor, "01-04-2024", "Medication 1", "Take with food", "1 pill", "1 week"));
-        prescriptions.put(2, new Prescription(2, patient, doctor, "05-04-2024", "Medication 2", "Take before bedtime", "2 pills", "2 weeks"));
-        prescriptions.put(3, new Prescription(3, patient, doctor, "10-04-2024", "Medication 3", "Take with plenty of water", "1 pill", "3 weeks"));
+        Doctor doctor1 = new Doctor("Anesthesiologist", 1, "Eric", "Anderson", 1124579548, "684 Delaware Avenue, SF", "M", 45);
+        Doctor doctor2 = new Doctor("Cardiologist", 2, "Abigail", "Henderson", 1124579548, "2075 Elliott Street, NH", "F", 33);
+
+        prescriptions.put(1, new Prescription(1, patient1, doctor1, "01-04-2024", "Medication 1", "Take with food", "1 pill", "1 week"));
+        prescriptions.put(2, new Prescription(2, patient1, doctor1, "05-05-2024", "Medication 2", "Take before bedtime", "2 pills", "2 weeks"));
+        prescriptions.put(3, new Prescription(3, patient1, doctor2, "10-06-2024", "Medication 3", "Take with plenty of water", "1 pill", "3 weeks"));
+        prescriptions.put(4, new Prescription(4, patient2, doctor1, "15-04-2024", "Medication 4", "Take after meals", "1 pill", "1 week"));
+        prescriptions.put(5, new Prescription(5, patient2, doctor2, "20-04-2024", "Medication 5", "Take on an empty stomach", "2 pills", "2 weeks"));
     }
 
     /**

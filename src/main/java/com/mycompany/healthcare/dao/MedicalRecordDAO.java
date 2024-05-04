@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,17 +25,22 @@ public class MedicalRecordDAO {
     private static final Logger LOGGER = LoggerFactory.getLogger(MedicalRecordDAO.class);
     private static final Map<Integer, MedicalRecord> medicalRecords = new HashMap<>();
 
+    // Initialize some sample data
     static {
-        // Initialize some sample data
         Patient patient1 = new Patient(3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
         Patient patient2 = new Patient(4, "Alice", "Smith", 1234567890, "123 Main St, Anytown, USA", "F", 25, "Healthy", "No significant medical history");
-        Patient patient3 = new Patient(5, "Bob", "Johnson", 1876543210, "456 Elm St, Othertown, USA", "M", 35, "Diagnosed with diabetes", "Regularly monitored for blood sugar levels");
-        Patient patient4 = new Patient(6, "Charlie", "Brown", 1551234567, "789 Oak St, Anotherplace, USA", "M", 45, "Recovering from surgery", "Underwent appendectomy last month");
+        Patient patient3 = new Patient(5, "Bob", "Johnson", 1876543210, "456 Elm St, Othertown, USA", "M", 15, "Mild allergies", "No major illnesses");
+        Patient patient4 = new Patient(6, "Charlie", "Brown", 1551234567, "789 Oak St, Anotherplace, USA", "M", 45, "High blood pressure", "Previous surgery for appendicitis");
 
-        medicalRecords.put(1, new MedicalRecord(1, patient1, "Penicillin and related antibiotics", "ADHD", "Every two week checkup and psychological counseling", "O+"));
-        medicalRecords.put(2, new MedicalRecord(2, patient2, "Ibuprofen", "None", "Annual checkup", "AB-"));
-        medicalRecords.put(3, new MedicalRecord(3, patient3, "Insulin", "Diabetes", "Monthly checkups", "B+"));
-        medicalRecords.put(4, new MedicalRecord(4, patient4, "Painkillers", "Appendectomy", "Follow-up appointment", "A-"));
+        MedicalRecord medicalRecord1 = new MedicalRecord(1, patient1, "Penicillin and related antibiotics", "ADHD", "Every two week checkup and psychological counseling", "O+");
+        MedicalRecord medicalRecord2 = new MedicalRecord(2, patient2, "Ibuprofen", "None", "Annual checkup", "AB-");
+        MedicalRecord medicalRecord3 = new MedicalRecord(3, patient3, "Insulin", "Diabetes", "Monthly checkups", "B+");
+        MedicalRecord medicalRecord4 = new MedicalRecord(4, patient4, "Painkillers", "Appendectomy", "Follow-up appointment", "A-");
+
+        medicalRecords.put(1, medicalRecord1);
+        medicalRecords.put(2, medicalRecord2);
+        medicalRecords.put(3, medicalRecord3);
+        medicalRecords.put(4, medicalRecord4);
     }
 
     /**

@@ -5,8 +5,6 @@
 package com.mycompany.healthcare.dao;
 
 import com.mycompany.healthcare.helper.Helper;
-import static com.mycompany.healthcare.helper.SimpleDateFormatHelper.formatSimpleDate;
-import static com.mycompany.healthcare.helper.SimpleDateFormatHelper.formatSimpleTime;
 import static com.mycompany.healthcare.helper.SimpleDateFormatHelper.parseSimpleDate;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -33,25 +31,19 @@ public class BillingDAO {
     private static final Map<Integer, Billing> bills = new HashMap<>();
 
     static {
-        String currentDate = formatSimpleDate(new Date());
-        String currentTime = formatSimpleTime(new Date());
-        Patient patient = new Patient(3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
-        List<String> services = Arrays.asList("Consultation", "X-ray", "Medication");
-        bills.put(1, new Billing(1, currentDate, currentTime, patient, services, 200.0, 150.0, 50.0));
+        List<String> services1 = Arrays.asList("Consultation", "MRI", "Physiotherapy");
+        List<String> services2 = Arrays.asList("X-ray", "Ultrasound", "Blood Test");
+        List<String> services3 = Arrays.asList("Dental Checkup", "Cleaning", "X-ray");
+        List<String> services4 = Arrays.asList("Physical Exam", "Blood Pressure Check", "Cholesterol Test");
 
-        Patient patient2 = new Patient(4, "Alice", "Smith", 1124579548, "2075 Elliott Street, NH", "F", 33, "General checkup", "None");
-        List<String> services2 = Arrays.asList("Consultation", "Blood test", "Prescription");
-        bills.put(2, new Billing(2, currentDate, currentTime, patient2, services2, 150.0, 100.0, 50.0));
+        Patient patient1 = new Patient(3, "Jeromy", "Osinski", 1234548548, "86869 Weissnat Light Suite 560, SF", "M", 60, "Diagnosed with ADHD", "Parkinsons patient. Who was previously admitted due to loss of memory");
+        Patient patient2 = new Patient(4, "Alice", "Smith", 1234567890, "123 Main St, Anytown, USA", "F", 25, "Healthy", "No significant medical history");
 
-        Patient patient3 = new Patient(5, "Bob", "Johnson", 1987654321, "123 Main St, Anytown, USA", "M", 45, "Back pain", "Previous back injury");
-        List<String> services3 = Arrays.asList("Consultation", "MRI", "Physiotherapy");
-        bills.put(3, new Billing(3, currentDate, currentTime, patient3, services3, 300.0, 200.0, 100.0));
-
-        List<String> services4 = Arrays.asList("MRI", "Physical therapy", "Medication");
-        bills.put(2, new Billing(2, currentDate, currentTime, patient3, services3, 300.0, 200.0, 100.0));
-
-        List<String> services5 = Arrays.asList("Blood test", "Consultation", "Medication");
-        bills.put(3, new Billing(3, currentDate, currentTime, patient3, services3, 250.0, 150.0, 100.0));
+        bills.put(1, new Billing(1, "05-06-2024", "12:00:23", patient1, services1, 200.0, 150.0, 50.0));
+        bills.put(2, new Billing(2, "15-08-2024", "13:30:45", patient2, services2, 250.0, 180.0, 70.0));
+        bills.put(3, new Billing(3, "07-01-2024", "10:15:12", patient1, services1, 300.0, 200.0, 100.0));
+        bills.put(4, new Billing(4, "28-10-2024", "10:45:36", patient1, services3, 180.0, 120.0, 60.0));
+        bills.put(5, new Billing(5, "19-04-2024", "17:20:58", patient2, services4, 220.0, 160.0, 60.0));
     }
 
     /**
@@ -121,7 +113,7 @@ public class BillingDAO {
             bills.put(updatedBill.getBillId(), updatedBill);
             LOGGER.info("Bill was updated. Bill ID : {}", updatedBill.getBillId());
         } catch (Exception e) {
-            LOGGER.error("Bill ID: " + updatedBill.getBillId()+ ". Error updating bill: " + e.getMessage(), e);
+            LOGGER.error("Bill ID: " + updatedBill.getBillId() + ". Error updating bill: " + e.getMessage(), e);
         }
     }
 
