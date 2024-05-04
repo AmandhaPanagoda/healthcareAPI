@@ -34,12 +34,12 @@ public class Appointment {
     public Appointment() {
     }
 
-    public Appointment(int appointmentId, String date, String time, Patient patientName, Doctor doctorName) {
+    public Appointment(int appointmentId, String date, String time, Patient patient, Doctor doctor) {
         this.appointmentId = appointmentId;
         this.date = date;
         this.time = time;
-        this.patient = patientName;
-        this.doctor = doctorName;
+        this.patient = patient;
+        this.doctor = doctor;
     }
 
     public int getAppointmentId() {

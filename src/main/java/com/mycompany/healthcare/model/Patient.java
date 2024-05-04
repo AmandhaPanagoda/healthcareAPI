@@ -17,7 +17,7 @@ import javax.validation.constraints.NotNull;
 public class Patient extends Person {
     
     @NotNull(message = "Health Status is required")
-    private String healthStatus;
+    private String healthStatus; 
     private String medicalHistory;
 
     public Patient() {

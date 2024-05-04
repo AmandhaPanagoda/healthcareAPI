@@ -64,6 +64,8 @@ public class RequestLoggingFilter implements Filter {
     
     /**
      * Determines if a log record should be logged.
+     * @param record
+     * @return 
      */
     public boolean isLoggable(LogRecord record) {
         return true; 

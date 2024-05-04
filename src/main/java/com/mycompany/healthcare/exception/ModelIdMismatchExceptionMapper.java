@@ -24,7 +24,7 @@ public class ModelIdMismatchExceptionMapper implements ExceptionMapper<ModelIdMi
     @Override
     public Response toResponse(ModelIdMismatchException exception) {
         // Log the exception
-        LOGGER.error("ModelIdMismatchException caught: {}",exception.getMessage(), exception);
+        LOGGER.error("ModelIdMismatchException caught: {}",exception.getMessage());
         
         // Build and return the response
         return Response.status(Response.Status.CONFLICT)
