@@ -68,6 +68,7 @@ public class PatientResource {
             LOGGER.info("Fetching all patient records");
             return patientDAO.getAllPatients().values();
         } else {
+            LOGGER.info("No patient records were found");
             throw new ResourceNotFoundException("No patient records were found");
         }
     }
@@ -89,6 +90,7 @@ public class PatientResource {
             LOGGER.info("Getting the patient by ID: " + patientId);
             return patient;
         } else {
+            LOGGER.info("Patient with ID " + patientId + " was not found");
             throw new ResourceNotFoundException("Patient with ID " + patientId + " was not found");
         }
     }
@@ -104,7 +106,7 @@ public class PatientResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addPatient(Patient patient) {
         if (patient == null) {
-            LOGGER.error("Patient object cannot be null");
+            LOGGER.error("Empty request was passsed. Patient object cannot be null");
             return Response.status(Response.Status.BAD_REQUEST).entity("Patient cannot be null").build();
         }
 
@@ -121,8 +123,11 @@ public class PatientResource {
             patient.setPersonId(newPatientId); // set the new person ID of the patient
             patientDAO.addPatient(patient); // add the new patient to the patients list 
 
+            LOGGER.info("New patient with ID: " + newPatientId + " was added successfully");
             return Response.status(Response.Status.CREATED).entity("New patient with ID: " + newPatientId + " was added successfully").build();
         }
+        
+        LOGGER.error("An unexpected error occured.");
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An unexpected error occured when adding the patient").build();
     }
 
@@ -141,11 +146,12 @@ public class PatientResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updatePatient(@PathParam("patientId") int patientId, Patient updatedPatient) {
         if (updatedPatient == null) {
-            LOGGER.error("Patient object cannot be null");
+            LOGGER.error("Empty request was passed. Patient object cannot be null");
             return Response.status(Response.Status.BAD_REQUEST).entity("Patient cannot be null").build();
         }
 
         if (patientId != updatedPatient.getPersonId()) { // IDs are immutable when updating
+            LOGGER.error("Request body and URI mismatch. Expected same personId");
             throw new ModelIdMismatchException("The passed patient IDs do not match");
         }
 
@@ -167,6 +173,7 @@ public class PatientResource {
             LOGGER.info("Patient record was updated. Updated Patient ID: " + patientId);
             return Response.status(Response.Status.OK).entity("Patient with ID " + patientId + " was updated successfully").build();
         } else {
+            LOGGER.info("Patient with ID " + patientId + " was not found");
             throw new ResourceNotFoundException("Patient with ID " + patientId + " was not found");
         }
     }
@@ -189,6 +196,7 @@ public class PatientResource {
         }
 
         if (patientId != partialUpdatedPatient.getPersonId()) {
+            LOGGER.error("Request body and URI mismatch. Expected same personId");
             throw new ModelIdMismatchException("The passed patient IDs do not match");
         }
 
@@ -199,12 +207,14 @@ public class PatientResource {
             Person existingPerson = personDAO.getPersonById(patientId); // get existing person record
             Person partialUpdatedPerson = createPerson(partialUpdatedPatient); // create a person object
             partialUpdatedPerson.setPersonId(patientId); // set the ID of the person
-
+            
             patientDAO.partialUpdatePatient(existingPatient, partialUpdatedPatient); // update the patient record
             personDAO.partialUpdatePerson(existingPerson, partialUpdatedPerson); // update the person record
-
+            
+            LOGGER.info("Patient with ID " + patientId + " was updated successfully");
             return Response.status(Response.Status.OK).entity("Patient with ID " + patientId + " was updated successfully").build();
         } else {
+            LOGGER.info("Patient with ID " + patientId + " was not found");
             throw new ResourceNotFoundException("Patient with ID " + patientId + " was not found");
         }
     }
@@ -222,8 +232,10 @@ public class PatientResource {
     public Response deletePatient(@PathParam("patientId") int patientId) {
         boolean removed = patientDAO.deletePatient(patientId); // delete the patient record
         if (removed) {
+            LOGGER.info("Patient with ID " + patientId + " was deleted successfully");
             return Response.status(Response.Status.OK).entity("Patient with ID " + patientId + " was deleted successfully").build();
         } else {
+            LOGGER.info("Patient with ID " + patientId + " was not found");
             throw new ResourceNotFoundException("Patient with ID " + patientId + " was not found");
         }
     }

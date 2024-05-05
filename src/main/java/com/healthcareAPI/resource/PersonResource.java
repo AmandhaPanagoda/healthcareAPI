@@ -59,6 +59,7 @@ public class PersonResource {
             LOGGER.info("Fetching all person records");
             return personDAO.getAllPeople().values();
         } else {
+            LOGGER.info("No person records were found");
             throw new ResourceNotFoundException("No people records were found");
         }
     }
@@ -80,6 +81,7 @@ public class PersonResource {
             LOGGER.info("Getting the person by ID: " + personId);
             return person;
         } else {
+            LOGGER.info("Person with ID " + personId + " was not found");
             throw new ResourceNotFoundException("Person with ID " + personId + " was not found");
         }
     }
@@ -97,6 +99,7 @@ public class PersonResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addPerson(Person person) {
         if (person == null) {
+            LOGGER.error("Empty request was passed. Person object expected.");
             throw new BadRequestException("Person record cannot be null");
         }
 
@@ -109,8 +112,10 @@ public class PersonResource {
         int newPersonId = personDAO.addPerson(person); // add the new person and get new person id
 
         if (newPersonId != -1) {
+            LOGGER.info("New person with ID: " + newPersonId + " was added successfully");
             return Response.status(Response.Status.CREATED).entity("New person with ID: " + newPersonId + " was added successfully").build();
         }
+        LOGGER.error("An unexpected error has occured");
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("An unexpected error occured when adding the person").build();
     }
 
@@ -130,11 +135,12 @@ public class PersonResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updatePerson(@PathParam("personId") int personId, Person updatedPerson) {
         if (updatedPerson == null) {
-            LOGGER.error("Person object cannot be null");
+            LOGGER.error("Empty request was passed. Person object expected.");
             return Response.status(Response.Status.BAD_REQUEST).entity("Person cannot be null").build();
         }
 
         if (personId != updatedPerson.getPersonId()) {
+            LOGGER.error("Request body and URI mismatch. Expected same personId");
             throw new ModelIdMismatchException("The passed person IDs do not match");
         }
 
@@ -152,10 +158,12 @@ public class PersonResource {
             
             ModelMapper modelMapper = new ModelMapper(); // create a mapper
             if (patient != null) {
+                LOGGER.info("Updating the patient record");
                 Patient partialUpdatedPatient = modelMapper.map(updatedPerson, Patient.class);
                 patientDAO.partialUpdatePatient(patient,partialUpdatedPatient); // update the patient record
             }
             if (doctor != null) {
+                LOGGER.info("Updating the doctor record");
                 Doctor partialUpdatedDoctor = modelMapper.map(updatedPerson, Doctor.class);
                 doctorDAO.partialUpdateDoctor(doctor, partialUpdatedDoctor); // update the doctor record
             }
@@ -182,11 +190,12 @@ public class PersonResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response partialUpdatePerson(@PathParam("personId") int personId, Person partialUpdatedPerson) {
         if (partialUpdatedPerson == null) {
-            LOGGER.error("Person object cannot be null");
+            LOGGER.error("Empty request was passed. Person object cannot be null");
             return Response.status(Response.Status.BAD_REQUEST).entity("Person cannot be null").build();
         }
 
         if (personId != partialUpdatedPerson.getPersonId()) {
+            LOGGER.error("Request body and URI mismatch. Expected same personId");
             throw new ModelIdMismatchException("The passed person IDs do not match");
         }
 
@@ -200,16 +209,20 @@ public class PersonResource {
             ModelMapper modelMapper = new ModelMapper(); // create a mapper
             personDAO.partialUpdatePerson(existingPerson, partialUpdatedPerson); // update the person record
             if (patient != null) {
+                LOGGER.info("Updating the patient record");
                 Patient partialUpdatedPatient = modelMapper.map(partialUpdatedPerson, Patient.class);
                 patientDAO.partialUpdatePatient(patient,partialUpdatedPatient); // update the patient record
             }
             if (doctor != null) {
+                LOGGER.info("Updating the doctor record");
                 Doctor partialUpdatedDoctor = modelMapper.map(partialUpdatedPerson, Doctor.class);
                 doctorDAO.partialUpdateDoctor(doctor,partialUpdatedDoctor); // update the doctor record
             }
             
+            LOGGER.info("Person with ID " + personId + " was updated successfully");
             return Response.status(Response.Status.OK).entity("Person with ID " + personId + " was updated successfully").build();
         } else {
+            LOGGER.info("Person with ID " + personId + " was not found");
             throw new ResourceNotFoundException("Person with ID " + personId + " was not found");
         }
     }
@@ -231,8 +244,10 @@ public class PersonResource {
         boolean removed = personDAO.deletePerson(personId);
 
         if (removed) {
+            LOGGER.info("Person with ID " + personId + " was deleted successfully");
             return Response.status(Response.Status.OK).entity("Person with ID " + personId + " was deleted successfully").build();
         } else {
+            LOGGER.info("Person with ID " + personId + " was not found");
             throw new ResourceNotFoundException("Person with ID " + personId + " was not found");
         }
     }
